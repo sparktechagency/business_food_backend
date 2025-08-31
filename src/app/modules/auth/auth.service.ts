@@ -43,6 +43,7 @@ const registrationAccount = async (files: any, payload: IAuth) => {
   if (existingAuth && !existingAuth.isActive) {
     await Promise.all([
       existingAuth.role === ENUM_USER_ROLE.EMPLOYER && Employer.deleteOne({ authId: existingAuth._id }),
+      existingAuth.role === ENUM_USER_ROLE.COMPANY && Company.deleteOne({ authId: existingAuth._id }),
       existingAuth.role === ENUM_USER_ROLE.ADMIN && Admin.deleteOne({ authId: existingAuth._id }),
       Auth.deleteOne({ email }),
     ]);

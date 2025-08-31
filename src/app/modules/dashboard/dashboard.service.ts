@@ -7,11 +7,12 @@ import Company from "./dashboard.model";
 import Auth from "../auth/auth.model";
 import sendEmail from "../../../utils/sendEmail";
 import { companyAccountCreatedByAdminEmail } from "../../../mails/company.email";
+import config from "../../../config";
 
 const createCompany = async (payload: any) => {
-    const { role, password, confirmPassword, email, ...other } = payload;
+    const { password, confirmPassword, email, ...other } = payload;
 
-    if (!password || !confirmPassword || !email) {
+    if ((password !== confirmPassword) || !email) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Email, Password, and Confirm Password are required!");
     }
 
@@ -21,18 +22,21 @@ const createCompany = async (payload: any) => {
     }
 
     const auth = {
-        role,
+        role: "COMPANY",
         name: other.name,
         email,
         password,
+        confirmPassword,
         isActive: true,
     };
 
     await sendEmail({
         email: auth.email,
-        subject: "Activate Your Account",
+        subject: `Welcome to ${config.app_name}`,
         html: companyAccountCreatedByAdminEmail({
-            user: { name: auth.name, password },
+            name: auth.name,
+            email: auth.email,
+            password,
         }),
     }).catch((error: any) => console.error("Failed to send email:", error.message));
 

@@ -27,7 +27,7 @@ const AuthSchema: Schema<IAuth> = new Schema(
     },
     role: {
       type: String,
-      enum: ["CUSTOMERS", "COMPANY", "ADMIN", "SUPER_ADMIN"],
+      enum: ["EMPLOYER", "COMPANY", "ADMIN", "SUPER_ADMIN"],
       required: true,
     },
     profile_image: {
