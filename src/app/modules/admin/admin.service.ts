@@ -43,7 +43,6 @@ const blockUnblockAuthUser = async (payload: BlockUnblockPayload) => {
     );
     if (!admin) throw new ApiError(httpStatus.NOT_FOUND, "Admin not found");
   }
-
   return updatedAuth;
 };
 
