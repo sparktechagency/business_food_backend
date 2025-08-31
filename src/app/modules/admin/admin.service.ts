@@ -4,7 +4,6 @@ import Auth from "../auth/auth.model";
 import { BlockUnblockPayload, IAdmin, IRequest } from "./admin.interface";
 import Admin from "./admin.model";
 import { ENUM_USER_ROLE } from "../../../enums/user";
-import Customers from "../employer/employer.model";
 import Employer from "../employer/employer.model";
 import Company from "../dashboard/dashboard.model";
 
