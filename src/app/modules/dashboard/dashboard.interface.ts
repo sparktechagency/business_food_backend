@@ -7,6 +7,7 @@ export interface ILocation {
 
 export interface ICompany {
     _id: mongoose.Schema.Types.ObjectId;
+    authId: mongoose.Schema.Types.ObjectId;
     name: string;
     phone_number?: string;
     email: string;
@@ -16,6 +17,13 @@ export interface ICompany {
     employer: mongoose.Schema.Types.ObjectId[];
 }
 
+
+export interface IIngredients {
+    _id: mongoose.Schema.Types.ObjectId;
+    name: string;
+    quantity: number;
+    unit: string;
+}
 export interface IQueryParams {
     searchTerm?: string;
     sort?: string;
@@ -23,4 +31,17 @@ export interface IQueryParams {
     limit?: number;
     fields?: string;
     [key: string]: any;
+}
+
+
+export interface IMenu {
+    weekStart: Date;
+    weekEnd: Date;
+    mealType: "Breakfast" | "Lunch" | "Dinner";
+    image: string;
+    dishName: string;
+    description?: string;
+    assignTo?: string;
+    assignCompany?: string;
+    calories: number;
 }

@@ -5,7 +5,7 @@ import { BlockUnblockPayload, IAdmin, IRequest } from "./admin.interface";
 import Admin from "./admin.model";
 import { ENUM_USER_ROLE } from "../../../enums/user";
 import Employer from "../employer/employer.model";
-import Company from "../dashboard/dashboard.model";
+import { Company } from "../dashboard/dashboard.model";
 
 const blockUnblockAuthUser = async (payload: BlockUnblockPayload) => {
   const { role, email, is_block } = payload;

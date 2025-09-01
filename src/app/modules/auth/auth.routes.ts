@@ -46,6 +46,11 @@ router.patch(
   validateRequest(AuthValidation.createAccount),
   AuthController.updateMyProfile
 );
+
+router.get(
+  "/get-company-public",
+  AuthController.getAllCompany
+);
 // ========== ADMIN ACCESS BLOCK ACCOUNT ========== 
 router.patch(
   "/block-unblock",

@@ -38,6 +38,23 @@ class QueryBuilder<T> {
     return this;
   }
 
+  dateFilter() {
+    const date = this?.query?.date as string | undefined;
+    if (date) {
+      const targetDate = new Date(date);
+
+      if (!isNaN(targetDate.getTime())) {
+        console.log("targetDate:", targetDate);
+
+        // ✅ FIX: Must use AND instead of OR
+        this.modelQuery = this.modelQuery.find({
+          weekStart: { $lte: targetDate },
+          weekEnd: { $gte: targetDate },
+        });
+      }
+    }
+    return this;
+  }
   sort() {
     const sort =
       (this?.query?.sort as string)?.split(',')?.join(' ') || '-createdAt';
@@ -64,6 +81,7 @@ class QueryBuilder<T> {
     return this;
   }
   async countTotal() {
+    console.log("==", this.modelQuery)
     const totalQueries = this.modelQuery.getFilter();
     const total = await this.modelQuery.model.countDocuments(totalQueries);
     const page = Number(this?.query?.page) || 1;

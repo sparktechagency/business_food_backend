@@ -21,8 +21,8 @@ import { RequestData } from "../../../interfaces/common";
 import { IAdmin } from "../admin/admin.interface";
 import Employer from "../employer/employer.model";
 import { IEmployer } from "../employer/employer.interface";
-import Company from "../dashboard/dashboard.model";
-import { ICompany } from "../dashboard/dashboard.interface";
+import { Company } from "../dashboard/dashboard.model";
+import { ICompany, IQueryParams } from "../dashboard/dashboard.interface";
 
 const registrationAccount = async (files: any, payload: IAuth) => {
   const { role, password, confirmPassword, email, ...other } = payload;
@@ -43,33 +43,28 @@ const registrationAccount = async (files: any, payload: IAuth) => {
   if (existingAuth && !existingAuth.isActive) {
     await Promise.all([
       existingAuth.role === ENUM_USER_ROLE.EMPLOYER && Employer.deleteOne({ authId: existingAuth._id }),
-      existingAuth.role === ENUM_USER_ROLE.COMPANY && Company.deleteOne({ authId: existingAuth._id }),
       existingAuth.role === ENUM_USER_ROLE.ADMIN && Admin.deleteOne({ authId: existingAuth._id }),
       Auth.deleteOne({ email }),
     ]);
   }
-
-  const { activationCode } = createActivationToken();
   const auth = {
     role,
     name: other.name,
     email,
-    activationCode,
     password,
     expirationTime: Date.now() + 3 * 60 * 1000,
   };
 
-  if (role === ENUM_USER_ROLE.EMPLOYER) {
-    console.log("==", role)
-    sendEmail({
-      email: auth.email,
-      subject: "Activate Your Account",
-      html: registrationSuccessEmailBody({
-        user: { name: auth.name },
-        activationCode,
-      }),
-    }).catch((error) => console.error("Failed to send email:", error.message));
-  }
+  // if (role === ENUM_USER_ROLE.EMPLOYER) {
+  //   await sendEmail({
+  //     email: auth.email,
+  //     subject: "Activate Your Account",
+  //     html: registrationSuccessEmailBody({
+  //       user: { name: auth.name },
+  //       activationCode,
+  //     }),
+  //   }).catch((error) => console.error("Failed to send email:", error.message));
+  // }
 
   let createAuth = await Auth.create(auth);
   if (!createAuth) {
@@ -79,16 +74,11 @@ const registrationAccount = async (files: any, payload: IAuth) => {
   other.authId = createAuth._id;
   other.email = email;
 
-  // Role-based user creation
   let result;
   switch (role) {
     case ENUM_USER_ROLE.EMPLOYER:
       result = await Employer.create(other);
       break;
-    case ENUM_USER_ROLE.COMPANY:
-      result = await Company.create(other);
-      break;
-
     case ENUM_USER_ROLE.ADMIN:
       result = await Admin.create(other);
       break;
@@ -96,9 +86,11 @@ const registrationAccount = async (files: any, payload: IAuth) => {
       throw new ApiError(400, "Invalid role provided!");
   }
 
-  const message = role === ENUM_USER_ROLE.EMPLOYER ?
-    "Please check your email for the activation OTP code."
-    : "Your account is awaiting super admin approval.";
+  const message =
+    role === ENUM_USER_ROLE.EMPLOYER
+      ? "Your account is awaiting approval from your company."
+      : "Your account is awaiting approval from the super admin.";
+
 
   return { result, role, message };
 };
@@ -185,6 +177,8 @@ const loginAccount = async (payload: LoginPayload) => {
   let userDetails: any;
   let role;
 
+  console.log("===", isAuth)
+
   switch (isAuth.role) {
     case ENUM_USER_ROLE.EMPLOYER:
       userDetails = await Employer.findOne({ authId: isAuth._id }).populate("authId");
@@ -196,7 +190,7 @@ const loginAccount = async (payload: LoginPayload) => {
       break;
     case ENUM_USER_ROLE.COMPANY:
       userDetails = await Company.findOne({ authId: isAuth._id }).populate("authId");
-      role = ENUM_USER_ROLE.ADMIN;
+      role = ENUM_USER_ROLE.COMPANY;
       break;
     case ENUM_USER_ROLE.SUPER_ADMIN:
       userDetails = await Admin.findOne({ authId: isAuth._id }).populate("authId");
@@ -627,7 +621,28 @@ const updateMyProfile = async (req: RequestData) => {
   throw new ApiError(httpStatus.BAD_REQUEST, "Invalid role");
 };
 
+const getAllCompany = async (queryParams: IQueryParams) => {
+  const { searchTerm, sortBy = "createdAt", sortOrder = "desc" } = queryParams;
+
+  const searchCondition = searchTerm
+    ? {
+      $or: [
+        { name: { $regex: searchTerm, $options: "i" } },
+        { address: { $regex: searchTerm, $options: "i" } },
+      ],
+    }
+    : {};
+
+  const company = await Company.find(searchCondition).sort({
+    [sortBy]: sortOrder === "asc" ? 1 : -1,
+  });
+
+  return { company };
+};
+
+
 export const AuthService = {
+  getAllCompany,
   registrationAccount,
   loginAccount,
   changePassword,
