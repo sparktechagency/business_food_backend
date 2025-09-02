@@ -34,7 +34,6 @@ router.delete("/ingredient/:id",
     DashboardController.deleteIngredient);
 // ===Menus manage==================
 router.get('/get-menus-list',
-    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getAllMenus);
 router.post('/create-menu',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
@@ -46,5 +45,11 @@ router.patch("/menu/:id",
 router.delete("/menu/:id",
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.deleteMenus);
+
+// ===App==================
+router.get('/menus-suggested',
+    DashboardController.getMenusSuggested);
+router.get('/menus-get-date',
+    DashboardController.getMenusByDate);
 
 export const DashboardRoutes = router;

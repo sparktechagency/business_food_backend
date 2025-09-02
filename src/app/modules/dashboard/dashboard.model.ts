@@ -44,9 +44,9 @@ const menuSchema = new Schema<IMenu>(
         image: { type: String },
         dishName: { type: String, required: true },
         description: { type: String },
-        // assignTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        // assignCompany: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
+        ratting: { type: Number, default: 5 },
         calories: { type: Number },
+        price: { type: Number, required: true }
     },
     { timestamps: true }
 );

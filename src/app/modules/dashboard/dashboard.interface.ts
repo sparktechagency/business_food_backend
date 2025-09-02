@@ -35,6 +35,7 @@ export interface IQueryParams {
 
 
 export interface IMenu {
+    ratting: Number;
     weekStart: Date;
     weekEnd: Date;
     mealType: "Breakfast" | "Lunch" | "Dinner";
@@ -44,4 +45,5 @@ export interface IMenu {
     assignTo?: string;
     assignCompany?: string;
     calories: number;
+    price: number;
 }

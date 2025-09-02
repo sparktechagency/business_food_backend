@@ -254,8 +254,8 @@ const getAllMenus = async (queryParams: IQueryParams) => {
     let menusQuery = queryBuilder
         .search(["dishName", "mealType"])
         .filter()
+        // .rangeFilter(["calories"])
         .sort()
-        .dateFilter()
         .paginate()
         .fields()
         .modelQuery;
@@ -266,6 +266,46 @@ const getAllMenus = async (queryParams: IQueryParams) => {
     return { menus, pagination };
 };
 
+
+const getMenusSuggested = async () => {
+    const menus = await Menus.find().sort({ ratting: -1 }).limit(10);
+
+    return menus;
+};
+
+const getMenusByDate = async (query: { date: string; page: string; limit: string }) => {
+    const { date, page, limit } = query;
+    const targetDate = new Date(date);
+    if (isNaN(targetDate.getTime())) {
+        throw new Error("Please provide a valid date in format YYYY-MM-DD");
+    }
+    const pageNumber = parseInt(page) || 1;
+    const limitNumber = parseInt(limit) || 10;
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const menus = await Menus.find({
+        weekStart: { $lte: targetDate },
+        weekEnd: { $gte: targetDate },
+    })
+        .sort({ ratting: -1 })
+        .skip(skip)
+        .limit(limitNumber);
+
+    const total = await Menus.countDocuments({
+        weekStart: { $lte: targetDate },
+        weekEnd: { $gte: targetDate },
+    });
+
+    return {
+        data: menus,
+        pagination: {
+            total,
+            page: pageNumber,
+            limit: limitNumber,
+            totalPages: Math.ceil(total / limitNumber),
+        },
+    };
+};
 
 export const DashboardService = {
     createMenus,
@@ -280,6 +320,8 @@ export const DashboardService = {
     updateIngredient,
     deleteIngredient,
     getAllIngredients,
+    getMenusSuggested,
+    getMenusByDate
 
 };
 

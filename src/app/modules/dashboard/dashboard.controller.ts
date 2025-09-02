@@ -131,6 +131,28 @@ const updateMenus = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+
+const getMenusSuggested = catchAsync(async (req: Request, res: Response) => {
+    const result = await DashboardService.getMenusSuggested();
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "successfully",
+        data: result,
+    });
+});
+
+const getMenusByDate = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const result = await DashboardService.getMenusByDate(query as any);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "successfully",
+        data: result,
+    });
+});
+
 export const DashboardController = {
     getAllCompany,
     createCompany,
@@ -143,5 +165,7 @@ export const DashboardController = {
     updateMenus,
     deleteMenus,
     createMenus,
-    getAllMenus
+    getAllMenus,
+    getMenusSuggested,
+    getMenusByDate
 };

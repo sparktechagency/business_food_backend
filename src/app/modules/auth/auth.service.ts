@@ -97,6 +97,7 @@ const registrationAccount = async (files: any, payload: IAuth) => {
 
 const activateAccount = async (payload: ActivationPayload) => {
   const { activation_code, userEmail } = payload;
+  console.log("activation_code, userEmail", activation_code, userEmail)
 
   const existAuth = await Auth.findOne({ email: userEmail });
   if (!existAuth) {
@@ -345,6 +346,8 @@ const resendCodeActivationAccount = async (payload: { email: string }) => {
   user.activationCode = activationCode;
   user.verifyExpire = expiryTime;
   await user.save();
+
+  console.log('===', email, activationCode, user)
 
   sendResetEmail(
     user.email,
