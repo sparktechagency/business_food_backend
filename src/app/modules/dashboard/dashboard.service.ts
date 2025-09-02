@@ -209,8 +209,12 @@ const createMenus = async (files: any, payload: IMenu) => {
     }
 };
 
-const updateMenu = async (menuId: string, payload: Partial<IMenu>) => {
+const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) => {
     try {
+        if (files?.image && files.image.length > 0) {
+            payload.image = `/images/profile/${files.image[0].filename}`;
+        }
+
         const updatedMenu = await Menus.findByIdAndUpdate(
             menuId,
             { $set: payload },

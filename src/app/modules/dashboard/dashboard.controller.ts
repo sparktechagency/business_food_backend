@@ -122,7 +122,8 @@ const deleteMenus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateMenus = catchAsync(async (req: Request, res: Response) => {
-    const result = await DashboardService.updateMenu(req.params.id, req.body);
+    const files = req.files;
+    const result = await DashboardService.updateMenu(files as any, req.params.id, req.body);
     sendResponse(res, {
         statusCode: 200,
         success: true,

@@ -41,6 +41,7 @@ router.post('/create-menu',
     DashboardController.createMenus);
 router.patch("/menu/:id",
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    uploadFile(),
     DashboardController.updateMenus);
 router.delete("/menu/:id",
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
