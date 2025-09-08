@@ -24,6 +24,16 @@ export interface IIngredients {
     quantity: number;
     unit: string;
 }
+
+export interface IOrders {
+    user: mongoose.Schema.Types.ObjectId;
+    userTypes: string;
+    company: mongoose.Schema.Types.ObjectId;
+    date: Date;
+    status: string;
+    menus_id: mongoose.Schema.Types.ObjectId;
+    mealType: string;
+}
 export interface IQueryParams {
     searchTerm?: string;
     sort?: string;
@@ -40,10 +50,14 @@ export interface IMenu {
     weekEnd: Date;
     mealType: "Breakfast" | "Lunch" | "Dinner";
     image: string;
+    notes: string,
+    status: string;
     dishName: string;
     description?: string;
     assignTo?: string;
     assignCompany?: string;
     calories: number;
     price: number;
+    quantity: number;
+    nutrition: object[],
 }

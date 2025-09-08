@@ -2,13 +2,17 @@ import httpStatus from "http-status";
 import QueryBuilder from "../../../builder/QueryBuilder";
 import { ENUM_USER_ROLE } from "../../../enums/user";
 import ApiError from "../../../errors/ApiError";
-import { ICompany, IIngredients, IMenu, IQueryParams } from "./dashboard.interface";
-import { Company, Ingredients, Menus } from "./dashboard.model";
+import { ICompany, IIngredients, IMenu, IOrders, IQueryParams } from "./dashboard.interface";
+import { Company, Ingredients, Menus, Orders } from "./dashboard.model";
 import Auth from "../auth/auth.model";
 import sendEmail from "../../../utils/sendEmail";
 import { companyAccountCreatedByAdminEmail } from "../../../mails/company.email";
 import config from "../../../config";
 import { Request, Response } from "express";
+import { IReqUser } from "../auth/auth.interface";
+import { IEmployer } from "../employer/employer.interface";
+import Employer from "../employer/employer.model";
+import mongoose from "mongoose";
 
 const createCompany = async (payload: any) => {
     const { password, confirmPassword, email, ...other } = payload;
@@ -194,20 +198,30 @@ const getAllIngredients = async (queryParams: IQueryParams) => {
 // ==============================================
 const createMenus = async (files: any, payload: IMenu) => {
     try {
-        if (!files || !files.image || !files.image[0]) {
+        const { nutrition } = payload;
+
+        if (!files?.image?.[0]) {
             throw new ApiError(400, "Image is required");
         }
 
         const image: string = `/images/profile/${files.image[0].filename}`;
 
-        const newMenu = await Menus.create({ ...payload, image });
+        if (nutrition) {
+            if (typeof nutrition === "string") {
+                payload.nutrition = JSON.parse(nutrition);
+            }
+        }
 
+        const newMenu = await Menus.create({ ...payload, image });
         return newMenu;
     } catch (error: any) {
+        console.error("Create menu error:", error.message);
+
         if (error instanceof ApiError) throw error;
         throw new ApiError(500, "Server error while creating menu");
     }
 };
+
 
 const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) => {
     try {
@@ -258,10 +272,10 @@ const getAllMenus = async (queryParams: IQueryParams) => {
     let menusQuery = queryBuilder
         .search(["dishName", "mealType"])
         .filter()
-        // .rangeFilter(["calories"])
         .sort()
         .paginate()
         .fields()
+        .dateFilter()
         .modelQuery;
 
     const menus = await menusQuery.exec();
@@ -277,27 +291,41 @@ const getMenusSuggested = async () => {
     return menus;
 };
 
-const getMenusByDate = async (query: { date: string; page: string; limit: string }) => {
-    const { date, page, limit } = query;
+const getMenusByDate = async (
+    query: { date: string; page?: string; limit?: string },
+    user: IReqUser
+) => {
+    const { date, page = "1", limit = "10" } = query;
+    const { userId } = user;
+
     const targetDate = new Date(date);
     if (isNaN(targetDate.getTime())) {
         throw new Error("Please provide a valid date in format YYYY-MM-DD");
     }
-    const pageNumber = parseInt(page) || 1;
-    const limitNumber = parseInt(limit) || 10;
+
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    console.log("date", startOfDay, endOfDay)
+
+    const pageNumber = Math.max(parseInt(page), 1);
+    const limitNumber = Math.max(parseInt(limit), 1);
     const skip = (pageNumber - 1) * limitNumber;
 
-    const menus = await Menus.find({
-        weekStart: { $lte: targetDate },
-        weekEnd: { $gte: targetDate },
-    })
-        .sort({ ratting: -1 })
+    const menus = await Orders.find({
+        user: userId,
+        date: { $gte: startOfDay, $lte: endOfDay },
+    }).populate('menus_id')
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber);
 
-    const total = await Menus.countDocuments({
-        weekStart: { $lte: targetDate },
-        weekEnd: { $gte: targetDate },
+    const total = await Orders.countDocuments({
+        user: userId,
+        date: { $gte: startOfDay, $lte: endOfDay },
     });
 
     return {
@@ -310,6 +338,113 @@ const getMenusByDate = async (query: { date: string; page: string; limit: string
         },
     };
 };
+
+
+const getMenuDetails = async (id: string) => {
+    const details = await Menus.findById(id);
+    if (!details) {
+        throw new ApiError(404, "Menu not found!")
+    }
+    const relatedMenus = await Menus.find({
+        mealType: details.mealType,
+    }).limit(6);;
+
+    return {
+        details,
+        relatedMenus
+    };
+};
+
+const getEmployerProfile = async (user: IReqUser, query: any) => {
+    console.log()
+    const { userId } = user;
+    const { page, searchTerm, limit } = query
+
+    if (query.searchTerm) {
+        delete query.page;
+    }
+
+    const queryBuilder = new QueryBuilder<IEmployer>(
+        Employer.find({ company_id: userId }),
+        query
+    );
+
+    let employerQuery = queryBuilder
+        .search(["name", "email"])
+        .filter()
+        .sort()
+        .paginate()
+        .fields()
+        .modelQuery;
+
+    const employers = await employerQuery.exec();
+    const pagination = await queryBuilder.countTotal();
+
+    console.log("pagination", pagination)
+
+    return { employers, pagination };
+};
+
+const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrders> => {
+    const { userId, role } = user;
+    const { menus_id, date } = payload;
+
+    let company = new mongoose.Types.ObjectId(userId);
+
+    const menus = await Menus.findById(menus_id) as IMenu
+    if (!menus) {
+        throw new ApiError(404, "Menu not found!")
+    }
+
+    let userTypes: "Company" | "Employer" = role === ENUM_USER_ROLE.EMPLOYER ? "Employer" : "Company";
+
+    if (role === ENUM_USER_ROLE.EMPLOYER) {
+        const employer = await Employer.findById(userId) as any;
+        if (!employer) throw new ApiError(404, "Employer not found");
+
+        company = new mongoose.Types.ObjectId(employer.company_id);
+    }
+
+    const order = await Orders.create({
+        user: userId,
+        userTypes,
+        company,
+        mealType: menus.mealType,
+        date: new Date(date),
+        status: "pending",
+        menus_id
+    })
+
+    return order;
+};
+
+// const getUserOrders = async (user: IReqUser): Promise<IOrders[]> => {
+//     const { userId, role } = user;
+//     const order
+
+//     if (role === ENUM_USER_ROLE.EMPLOYER) {
+//         orders = await Orders.find({
+//             user: new mongoose.Types.ObjectId(userId)
+//         })
+//             .populate("user")
+//             .populate("menus_id")
+//             .sort({ date: -1 });
+
+//     }
+
+//     if (role === ENUM_USER_ROLE.COMPANY) {
+//         orders = await Orders.find({
+//             company: new mongoose.Types.ObjectId(userId)
+//         })
+//             .populate("user")
+//             .populate("menus_id")
+//             .sort({ date: -1 });
+//     }
+
+//     return orders;
+// };
+
+
 
 export const DashboardService = {
     createMenus,
@@ -325,7 +460,10 @@ export const DashboardService = {
     deleteIngredient,
     getAllIngredients,
     getMenusSuggested,
-    getMenusByDate
-
+    getMenusByDate,
+    getMenuDetails,
+    getEmployerProfile,
+    createScheduleOrder,
+    // getUserOrders
 };
 

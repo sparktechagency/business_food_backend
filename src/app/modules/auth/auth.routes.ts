@@ -43,7 +43,6 @@ router.patch(
   "/edit-profile",
   auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY, ENUM_USER_ROLE.ADMIN),
   uploadFile(),
-  validateRequest(AuthValidation.createAccount),
   AuthController.updateMyProfile
 );
 

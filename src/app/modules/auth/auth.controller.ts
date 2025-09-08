@@ -139,7 +139,7 @@ const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "Locations upload successfully.",
+    message: "Profile update successfully.",
     data: result,
   });
 });

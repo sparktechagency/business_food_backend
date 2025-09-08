@@ -33,7 +33,7 @@ const EmployerSchema = new Schema<IEmployer>(
     },
     status: {
       type: String,
-      enum: ["active", "deactivate"],
+      enum: ["active", "pending", "deactivate"],
       default: "active",
     },
   },

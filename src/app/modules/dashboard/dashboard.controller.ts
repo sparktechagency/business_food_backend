@@ -2,6 +2,7 @@ import catchAsync from "../../../shared/catchasync";
 import sendResponse from "../../../shared/sendResponse";
 import { Request, Response } from 'express';
 import { DashboardService } from "./dashboard.service";
+import { IReqUser } from "../auth/auth.interface";
 
 const getAllCompany = catchAsync(async (req: Request, res: Response) => {
     const result = await DashboardService.getAllCompany(req.query as any);
@@ -145,7 +146,8 @@ const getMenusSuggested = catchAsync(async (req: Request, res: Response) => {
 
 const getMenusByDate = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
-    const result = await DashboardService.getMenusByDate(query as any);
+    const user = req.user;
+    const result = await DashboardService.getMenusByDate(query as any, user as IReqUser);
     sendResponse(res, {
         statusCode: 200,
         success: true,
@@ -153,6 +155,42 @@ const getMenusByDate = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+
+const getMenuDetails = catchAsync(async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const result = await DashboardService.getMenuDetails(id as any);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "successfully",
+        data: result,
+    });
+});
+
+const getEmployerProfile = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const user = req.user;
+    const result = await DashboardService.getEmployerProfile(user as IReqUser, query);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "successfully",
+        data: result,
+    });
+});
+
+const createScheduleOrder = catchAsync(async (req: Request, res: Response) => {
+    const payload = req.body;
+    const user = req.user;
+    const result = await DashboardService.createScheduleOrder(user as IReqUser, payload);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Order created successfully",
+        data: result,
+    });
+});
+
 
 export const DashboardController = {
     getAllCompany,
@@ -168,5 +206,8 @@ export const DashboardController = {
     createMenus,
     getAllMenus,
     getMenusSuggested,
-    getMenusByDate
+    getMenusByDate,
+    getMenuDetails,
+    getEmployerProfile,
+    createScheduleOrder
 };

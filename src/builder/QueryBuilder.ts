@@ -52,6 +52,21 @@ class QueryBuilder<T> {
     return this;
   }
 
+  dateFilter() {
+    const { date } = this.query;
+    if (date) {
+      console.log("===", date)
+      const targetDate = new Date(date);
+      if (!isNaN(targetDate.getTime())) {
+        this.modelQuery = this.modelQuery.find({
+          weekStart: { $lte: targetDate },
+          weekEnd: { $gte: targetDate },
+        });
+      }
+    }
+    return this;
+  }
+
   sort() {
     const sortBy = this?.query?.sort?.split(",").join(" ") || "-createdAt";
     this.modelQuery = this.modelQuery.sort(sortBy);
@@ -76,6 +91,17 @@ class QueryBuilder<T> {
   async countTotal() {
     const countQuery = this.modelQuery.model.find(this.modelQuery.getQuery());
     const total = await countQuery.countDocuments();
+    const page = Number(this?.query?.page) || 1;
+    const limit = Number(this?.query?.limit) || 10;
+    const totalPage = Math.ceil(total / limit);
+
+    return {
+      page,
+      limit,
+      total,
+      totalPage,
+    };
+
     return { total };
   }
 }

@@ -47,10 +47,17 @@ const registrationAccount = async (files: any, payload: IAuth) => {
       Auth.deleteOne({ email }),
     ]);
   }
+
+  let profile_image: string | undefined = undefined;
+  if (files && files.profile_image) {
+    profile_image = `/images/profile/${files.profile_image[0].filename}`;
+  }
+
   const auth = {
     role,
     name: other.name,
     email,
+    profile_image,
     password,
     expirationTime: Date.now() + 3 * 60 * 1000,
   };
@@ -73,10 +80,12 @@ const registrationAccount = async (files: any, payload: IAuth) => {
 
   other.authId = createAuth._id;
   other.email = email;
+  other.profile_image = profile_image || null;
 
   let result;
   switch (role) {
     case ENUM_USER_ROLE.EMPLOYER:
+      other.status = "pending";
       result = await Employer.create(other);
       break;
     case ENUM_USER_ROLE.ADMIN:

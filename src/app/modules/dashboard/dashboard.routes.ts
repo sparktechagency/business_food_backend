@@ -32,6 +32,7 @@ router.patch("/ingredient/:id",
 router.delete("/ingredient/:id",
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.deleteIngredient);
+
 // ===Menus manage==================
 router.get('/get-menus-list',
     DashboardController.getAllMenus);
@@ -49,8 +50,32 @@ router.delete("/menu/:id",
 
 // ===App==================
 router.get('/menus-suggested',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
     DashboardController.getMenusSuggested);
 router.get('/menus-get-date',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
     DashboardController.getMenusByDate);
+router.get('/menu-details/:id',
+    DashboardController.getMenuDetails);
+
+// =========
+router.post('/create-order',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
+    DashboardController.createScheduleOrder);
+// router.post('/get-all-order',
+//     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
+//     DashboardController.getUserOrders);
+
+
+// =========
+router.get('/employer-profile',
+    auth(ENUM_USER_ROLE.COMPANY),
+    DashboardController.getEmployerProfile);
+router.get('/employer-profile',
+    auth(ENUM_USER_ROLE.COMPANY),
+    DashboardController.getEmployerProfile);
+router.get('/employer-profile',
+    auth(ENUM_USER_ROLE.COMPANY),
+    DashboardController.getEmployerProfile);
 
 export const DashboardRoutes = router;
