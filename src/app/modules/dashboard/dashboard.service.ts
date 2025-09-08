@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import QueryBuilder from "../../../builder/QueryBuilder";
 import { ENUM_USER_ROLE } from "../../../enums/user";
 import ApiError from "../../../errors/ApiError";
-import { ICompany, IIngredients, IMenu, IOrders, IQueryParams } from "./dashboard.interface";
+import { ICompany, IIngredients, IMenu, IOrders, IQuery, IQueryParams } from "./dashboard.interface";
 import { Company, Ingredients, Menus, Orders } from "./dashboard.model";
 import Auth from "../auth/auth.model";
 import sendEmail from "../../../utils/sendEmail";
@@ -12,7 +12,7 @@ import { Request, Response } from "express";
 import { IReqUser } from "../auth/auth.interface";
 import { IEmployer } from "../employer/employer.interface";
 import Employer from "../employer/employer.model";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 const createCompany = async (payload: any) => {
     const { password, confirmPassword, email, ...other } = payload;
@@ -92,6 +92,7 @@ const getAllCompany = async (queryParams: IQueryParams) => {
 
     return { company, pagination };
 };
+
 // ===========================
 const createIngredient = async (req: Request) => {
     try {
@@ -195,6 +196,7 @@ const getAllIngredients = async (queryParams: IQueryParams) => {
 
     return { ingredients, pagination };
 };
+
 // ==============================================
 const createMenus = async (files: any, payload: IMenu) => {
     try {
@@ -221,7 +223,6 @@ const createMenus = async (files: any, payload: IMenu) => {
         throw new ApiError(500, "Server error while creating menu");
     }
 };
-
 
 const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) => {
     try {
@@ -259,7 +260,7 @@ const deleteMenu = async (menuId: string) => {
     }
 };
 
-const getAllMenus = async (queryParams: IQueryParams) => {
+const getAllMenus = async (queryParams: IQueryParams, authId: string) => {
     if (queryParams.searchTerm) {
         delete queryParams.page;
     }
@@ -278,12 +279,20 @@ const getAllMenus = async (queryParams: IQueryParams) => {
         .dateFilter()
         .modelQuery;
 
-    const menus = await menusQuery.exec();
+    let menus = await menusQuery.lean();
     const pagination = await queryBuilder.countTotal();
+
+    menus = menus.map(menu => {
+        // @ts-ignore
+        const isFavorited = menu?.favorite?.some((id: any) => id.toString() === authId.toString());
+        return {
+            ...menu,
+            favorite: isFavorited
+        };
+    });
 
     return { menus, pagination };
 };
-
 
 const getMenusSuggested = async () => {
     const menus = await Menus.find().sort({ ratting: -1 }).limit(10);
@@ -339,19 +348,40 @@ const getMenusByDate = async (
     };
 };
 
-
-const getMenuDetails = async (id: string) => {
-    const details = await Menus.findById(id);
+const getMenuDetails = async (id: string, authId: string) => {
+    let details = await Menus.findById(id).lean();
     if (!details) {
-        throw new ApiError(404, "Menu not found!")
+        throw new ApiError(404, "Menu not found!");
     }
-    const relatedMenus = await Menus.find({
+
+    const isFavorited = details.favorite?.some(
+        (fid: any) => fid.toString() === authId.toString()
+    );
+
+
+    let relatedMenus = await Menus.find({
         mealType: details.mealType,
-    }).limit(6);;
+    })
+        .limit(6)
+        .lean();
+
+    // @ts-ignore
+    relatedMenus = relatedMenus.map(menu => {
+        const isFavorited = menu.favorite?.some(
+            (fid: any) => fid.toString() === authId.toString()
+        );
+        return {
+            ...menu,
+            favorite: isFavorited,
+        };
+    });
 
     return {
-        details,
-        relatedMenus
+        details: {
+            ...details,
+            favorite: isFavorited,
+        },
+        relatedMenus,
     };
 };
 
@@ -418,35 +448,176 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
     return order;
 };
 
-// const getUserOrders = async (user: IReqUser): Promise<IOrders[]> => {
-//     const { userId, role } = user;
-//     const order
+const getUserOrders = async (
+    user: IReqUser,
+    query: IQuery
+): Promise<{ orders: IOrders[]; total: number; page: number; limit: number }> => {
+    const { userId, role } = user;
+    const { page = "1", limit = "10", mealType, status, date } = query;
 
-//     if (role === ENUM_USER_ROLE.EMPLOYER) {
-//         orders = await Orders.find({
-//             user: new mongoose.Types.ObjectId(userId)
-//         })
-//             .populate("user")
-//             .populate("menus_id")
-//             .sort({ date: -1 });
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-//     }
+    const filter: any = {};
+    if (role === "EMPLOYER") filter.user = userId;
+    if (role === "COMPANY") filter.company = userId;
 
-//     if (role === ENUM_USER_ROLE.COMPANY) {
-//         orders = await Orders.find({
-//             company: new mongoose.Types.ObjectId(userId)
-//         })
-//             .populate("user")
-//             .populate("menus_id")
-//             .sort({ date: -1 });
-//     }
+    if (mealType) filter.mealType = mealType;
+    if (status) filter.status = status;
+    if (date) {
+        const dayStart = new Date(date);
+        if (isNaN(dayStart.getTime())) {
+            throw new Error("Invalid date format. Please use a valid date.");
+        }
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+        filter.date = { $gte: dayStart, $lte: dayEnd };
+    }
 
-//     return orders;
-// };
+    const total = await Orders.countDocuments(filter);
 
+    const orders = await Orders.find(filter)
+        .populate({
+            path: "user",
+            select: "name email address phone_number profile_image",
+        })
+        .populate({
+            path: "menus_id",
+            select: "-nutrition",
+        })
+        .sort({ date: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+    return {
+        orders,
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+    };
+};
+
+// =============================================
+const getUserInvoice = async (
+    user: IReqUser,
+    query: IQuery
+): Promise<{ orders: IOrders[]; total: number; totalPrice: number }> => {
+    const { userId, role } = user;
+    const { page = "1", limit = "10", mealType, status, month } = query;
+
+    if (role !== "COMPANY") {
+        throw new Error("Unauthorized: Only COMPANY role can access orders.");
+    }
+
+    // const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const filter: any = { company: userId };
+
+    if (mealType) filter.mealType = mealType;
+    if (status) filter.status = status;
+
+    if (month) {
+        const [year, monthNumber] = month.split("-").map(Number);
+        const startDate = new Date(year, monthNumber - 1, 1);
+        const endDate = new Date(year, monthNumber, 0, 23, 59, 59, 999);
+        filter.date = { $gte: startDate, $lte: endDate };
+    }
+
+    const total = await Orders.countDocuments(filter);
+
+    const orders = await Orders.find(filter)
+        .populate({
+            path: "user",
+            select: "name email address phone_number profile_image",
+        })
+        .populate({
+            path: "menus_id",
+            select: "price",
+        })
+        .sort({ date: -1 })
+    // .skip(skip)
+    // .limit(parseInt(limit));
+
+    const totalPrice = orders.reduce((sum, order) => {
+        const price = (order.menus_id as any)?.price || 0;
+        return sum + price;
+    }, 0);
+
+    return {
+        orders,
+        total,
+        totalPrice,
+    };
+};
+
+// ================
+const addRemoveFavorites = async (authId: string, menuId: Types.ObjectId) => {
+    const menu = await Menus.findById(menuId);
+    if (!menu) {
+        throw new ApiError(404, "menu not found");
+    }
+
+    const isFavorited = menu.favorite.includes(authId);
+
+    if (isFavorited) {
+        menu.favorite = menu.favorite.filter(id => id.toString() !== authId.toString());
+    } else {
+        menu.favorite.push(authId);
+    }
+
+    await menu.save();
+    return { message: isFavorited ? "Removed from favorites" : "Added to favorites" };
+};
+
+const getUserFavorites = async (user: IReqUser) => {
+    const authId = user.authId;
+
+    const recipes = await Menus.find({ favorite: authId })
+        .lean();
+
+    const updatedRecipes = recipes.map(recipe => ({
+        ...recipe,
+        favorite: true
+    }));
+
+    return { recipes: updatedRecipes };
+};
+
+const sendReviews = async (payload: {
+    menuId: string;
+    orderId: string;
+    ratting: string;
+}) => {
+    // const { menuId, orderId, ratting } = payload;
+
+    // const ratingValue = Number(ratting);
+    // if (isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    //     throw new ApiError(400, "Rating must be a number between 1 and 5");
+    // }
+
+    // // 1️⃣ Mark order as rated
+    // await Orders.findByIdAndUpdate(orderId, { ratting: true });
+
+
+    // const menu = await Menus.findById(menuId);
+    // if (!menu) throw new ApiError(404, "Menu not found");
+
+    // menu.ratting = (menu.ratingTotal || 0) + ratingValue;
+    // menu.ratingCount = (menu.ratingCount || 0) + 1;
+    // menu.ratting = menu.ratingTotal / menu.ratingCount;
+
+    // await menu.save();
+
+    // return {
+    //     message: "Review submitted successfully",
+    //     menu,
+    // };
+};
 
 
 export const DashboardService = {
+    sendReviews,
+    getUserFavorites,
     createMenus,
     updateMenu,
     deleteMenu,
@@ -464,6 +635,8 @@ export const DashboardService = {
     getMenuDetails,
     getEmployerProfile,
     createScheduleOrder,
-    // getUserOrders
+    getUserOrders,
+    getUserInvoice,
+    addRemoveFavorites
 };
 

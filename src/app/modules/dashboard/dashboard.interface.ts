@@ -33,6 +33,7 @@ export interface IOrders {
     status: string;
     menus_id: mongoose.Schema.Types.ObjectId;
     mealType: string;
+    ratting: boolean;
 }
 export interface IQueryParams {
     searchTerm?: string;
@@ -60,4 +61,14 @@ export interface IMenu {
     price: number;
     quantity: number;
     nutrition: object[],
+    favorite: string[]
+}
+
+export interface IQuery {
+    page?: string;
+    limit?: string;
+    mealType?: string;
+    status?: string;
+    date?: string;
+    month?: string;
 }

@@ -48,6 +48,7 @@ const menuSchema = new Schema<IMenu>(
         calories: { type: Number },
         quantity: { type: Number },
         price: { type: Number, required: true },
+        favorite: { type: [String], ref: "Auth", default: [] },
         nutrition: {
             type: [Object],
             required: true,
@@ -77,6 +78,9 @@ const ordersSchema = new Schema<IOrders>(
         company: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
+        },
+        ratting: {
+            type: Boolean,
         },
         mealType: {
             type: String,

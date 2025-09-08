@@ -91,7 +91,8 @@ const updateIngredient = catchAsync(async (req: Request, res: Response) => {
 
 // ===================== 
 const getAllMenus = catchAsync(async (req: Request, res: Response) => {
-    const result = await DashboardService.getAllMenus(req.query as any);
+    const { authId } = req.user as IReqUser;
+    const result = await DashboardService.getAllMenus(req.query as any, authId as string);
     sendResponse(res, {
         statusCode: 200,
         success: true,
@@ -158,7 +159,8 @@ const getMenusByDate = catchAsync(async (req: Request, res: Response) => {
 
 const getMenuDetails = catchAsync(async (req: Request, res: Response) => {
     const id = req.params.id;
-    const result = await DashboardService.getMenuDetails(id as any);
+    const { authId } = req.user as IReqUser;
+    const result = await DashboardService.getMenuDetails(id as any, authId as string);
     sendResponse(res, {
         statusCode: 200,
         success: true,
@@ -191,11 +193,72 @@ const createScheduleOrder = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getUserOrders = catchAsync(async (req: Request, res: Response) => {
+    const payload = req.query;
+    const user = req.user;
+    const result = await DashboardService.getUserOrders(user as IReqUser, payload);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Order history get successfully;",
+        data: result,
+    });
+});
+
+const getUserInvoice = catchAsync(async (req: Request, res: Response) => {
+    const payload = req.query;
+    const user = req.user;
+    const result = await DashboardService.getUserInvoice(user as IReqUser, payload);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Order invoice get successfully;",
+        data: result,
+    });
+});
+
+const toggleFavorite = catchAsync(async (req: Request, res: Response) => {
+    const { authId } = req.user as IReqUser;
+    const menuId = req.params.id;
+    const result = await DashboardService.addRemoveFavorites(authId as string, menuId as any);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: result.message,
+        data: result,
+    });
+});
+
+const getUserFavorites = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as IReqUser;
+    const result = await DashboardService.getUserFavorites(user);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
+
+const sendReviews = catchAsync(async (req: Request, res: Response) => {
+    // const user = req.user as IReqUser;
+    const payload = req.body;
+    const result = await DashboardService.sendReviews(payload as any);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
 
 export const DashboardController = {
+    sendReviews,
+    getUserFavorites,
     getAllCompany,
     createCompany,
     deleteCompany,
+    toggleFavorite,
     updateCompany,
     updateIngredient,
     createIngredient,
@@ -209,5 +272,7 @@ export const DashboardController = {
     getMenusByDate,
     getMenuDetails,
     getEmployerProfile,
-    createScheduleOrder
+    createScheduleOrder,
+    getUserOrders,
+    getUserInvoice
 };

@@ -35,6 +35,7 @@ router.delete("/ingredient/:id",
 
 // ===Menus manage==================
 router.get('/get-menus-list',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getAllMenus);
 router.post('/create-menu',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
@@ -56,17 +57,29 @@ router.get('/menus-get-date',
     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
     DashboardController.getMenusByDate);
 router.get('/menu-details/:id',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getMenuDetails);
-
+router.patch('/toggle_favorite/:id',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
+    DashboardController.toggleFavorite);
+router.get('/get_user_favorites',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
+    DashboardController.getUserFavorites
+);
 // =========
 router.post('/create-order',
     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
     DashboardController.createScheduleOrder);
-// router.post('/get-all-order',
-//     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
-//     DashboardController.getUserOrders);
-
-
+router.get('/get-all-order',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
+    DashboardController.getUserOrders);
+router.get('/get-order-invoice',
+    auth(ENUM_USER_ROLE.COMPANY),
+    DashboardController.getUserInvoice);
+router.get('/send_reviews',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
+    DashboardController.sendReviews
+);
 // =========
 router.get('/employer-profile',
     auth(ENUM_USER_ROLE.COMPANY),
