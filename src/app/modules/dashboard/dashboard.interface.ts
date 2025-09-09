@@ -33,6 +33,7 @@ export interface IOrders {
     status: string;
     menus_id: mongoose.Schema.Types.ObjectId;
     mealType: string;
+    ratingValue: number;
     ratting: boolean;
 }
 export interface IQueryParams {

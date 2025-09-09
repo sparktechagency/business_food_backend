@@ -44,7 +44,7 @@ const menuSchema = new Schema<IMenu>(
         image: { type: String },
         dishName: { type: String, required: true },
         description: { type: String },
-        ratting: { type: Number, default: 5 },
+        ratting: { type: Number, default: 0 },
         calories: { type: Number },
         quantity: { type: Number },
         price: { type: Number, required: true },
@@ -79,9 +79,8 @@ const ordersSchema = new Schema<IOrders>(
             type: mongoose.Schema.Types.ObjectId,
             required: true,
         },
-        ratting: {
-            type: Boolean,
-        },
+        ratting: { type: Boolean, default: false },
+        ratingValue: { type: Number, min: 1, max: 5 },
         mealType: {
             type: String,
             required: true,
@@ -101,11 +100,11 @@ const ordersSchema = new Schema<IOrders>(
     { timestamps: true }
 );
 
-
+const Orders: Model<IOrders> = mongoose.model<IOrders>("Orders", ordersSchema);
 const Menus: Model<IMenu> = mongoose.model<IMenu>("Menu", menuSchema);
 const Company: Model<ICompany> = mongoose.model<ICompany>("Company", companySchema);
 const Ingredients: Model<IIngredients> = mongoose.model<IIngredients>("Ingredients", ingredientsSchema);
-const Orders: Model<IOrders> = mongoose.model<IOrders>("Orders", ordersSchema);
+
 
 
 

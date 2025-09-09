@@ -66,6 +66,7 @@ router.get('/get_user_favorites',
     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
     DashboardController.getUserFavorites
 );
+
 // =========
 router.post('/create-order',
     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
@@ -76,7 +77,7 @@ router.get('/get-all-order',
 router.get('/get-order-invoice',
     auth(ENUM_USER_ROLE.COMPANY),
     DashboardController.getUserInvoice);
-router.get('/send_reviews',
+router.post('/send_reviews',
     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
     DashboardController.sendReviews
 );
@@ -84,11 +85,8 @@ router.get('/send_reviews',
 router.get('/employer-profile',
     auth(ENUM_USER_ROLE.COMPANY),
     DashboardController.getEmployerProfile);
-router.get('/employer-profile',
+router.get('/delete_employer_profile/:id',
     auth(ENUM_USER_ROLE.COMPANY),
-    DashboardController.getEmployerProfile);
-router.get('/employer-profile',
-    auth(ENUM_USER_ROLE.COMPANY),
-    DashboardController.getEmployerProfile);
+    DashboardController.deleteEmployerProfiles);
 
 export const DashboardRoutes = router;

@@ -252,7 +252,22 @@ const sendReviews = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+
+const deleteEmployerProfiles = catchAsync(async (req: Request, res: Response) => {
+    const { userId } = req.user as IReqUser;
+    const profileId = req.params.id;
+    const result = await DashboardService.deleteEmployerProfiles(userId as string, profileId as string);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Employer profile deleted successfully',
+        data: result,
+    });
+});
+
+
 export const DashboardController = {
+    deleteEmployerProfiles,
     sendReviews,
     getUserFavorites,
     getAllCompany,

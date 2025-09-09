@@ -588,34 +588,47 @@ const sendReviews = async (payload: {
     orderId: string;
     ratting: string;
 }) => {
-    // const { menuId, orderId, ratting } = payload;
+    const { menuId, orderId, ratting } = payload;
 
-    // const ratingValue = Number(ratting);
-    // if (isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
-    //     throw new ApiError(400, "Rating must be a number between 1 and 5");
-    // }
+    const ratingValue = Number(ratting);
+    if (isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+        throw new ApiError(400, "Rating must be a number between 1 and 5");
+    }
 
-    // // 1️⃣ Mark order as rated
-    // await Orders.findByIdAndUpdate(orderId, { ratting: true });
+    const menu = await Menus.findById(menuId);
+    if (!menu) throw new ApiError(404, "Menu not found");
 
+    const sum = (Number(menu?.ratting) | 0) + ratingValue;
+    const avgRating = Number(sum) / 2;
+    menu.ratting = Number(avgRating.toFixed(1));
+    await menu.save();
 
-    // const menu = await Menus.findById(menuId);
-    // if (!menu) throw new ApiError(404, "Menu not found");
+    const order = await Orders.findByIdAndUpdate(orderId, { ratting: true, ratingValue: ratingValue }, { new: true });
 
-    // menu.ratting = (menu.ratingTotal || 0) + ratingValue;
-    // menu.ratingCount = (menu.ratingCount || 0) + 1;
-    // menu.ratting = menu.ratingTotal / menu.ratingCount;
-
-    // await menu.save();
-
-    // return {
-    //     message: "Review submitted successfully",
-    //     menu,
-    // };
+    return {
+        message: "Review submitted successfully",
+        order
+    };
 };
 
+const deleteEmployerProfiles = async (userId: string, profileId: string) => {
+
+    const employer = await Employer.findById(profileId)
+    if (!employer) {
+        throw new ApiError(404, 'Employer not found!')
+    }
+
+    if (employer.company_id.toString() !== userId.toString()) {
+        throw new ApiError(403, 'You are not the owner of this Employer profile!');
+    }
+    await Employer.findByIdAndDelete(profileId);
+    return {
+        message: 'Employer profile deleted successfully',
+    };
+};
 
 export const DashboardService = {
+    deleteEmployerProfiles,
     sendReviews,
     getUserFavorites,
     createMenus,
