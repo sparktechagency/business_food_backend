@@ -13,6 +13,7 @@ export interface ICompany {
     email: string;
     address: string;
     status: string;
+    plants: number;
     profile_image: string;
     employer: mongoose.Schema.Types.ObjectId[];
 }

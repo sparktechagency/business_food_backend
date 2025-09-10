@@ -1,5 +1,6 @@
 import mongoose, { Model, Schema } from "mongoose";
 import { ICompany, IIngredients, IMenu, IOrders } from "./dashboard.interface";
+import { number } from "zod";
 
 const companySchema = new Schema<ICompany>(
     {
@@ -9,6 +10,10 @@ const companySchema = new Schema<ICompany>(
         profile_image: { type: String, default: null },
         address: { type: String, default: null },
         phone_number: { type: String, default: null },
+        plants: {
+            type: Number,
+            default: null,
+        },
         employer: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: "Employer",
@@ -100,6 +105,37 @@ const ordersSchema = new Schema<IOrders>(
     { timestamps: true }
 );
 
+const termsAndConditionsSchema = new mongoose.Schema(
+    {
+        description: {
+            type: String,
+            required: true,
+        },
+    }
+);
+
+const privacyPolicySchema = new mongoose.Schema(
+    {
+        description: {
+            type: String,
+            required: true,
+        },
+    }
+);
+
+const aboutUsSchema = new mongoose.Schema(
+    {
+        description: {
+            type: String,
+            required: true,
+        },
+    }
+);
+
+const AboutUs = mongoose.model('AboutUs', aboutUsSchema);
+const TermsConditions = mongoose.model('TermsConditions', termsAndConditionsSchema);
+const PrivacyPolicy = mongoose.model('PrivacyPolicy', privacyPolicySchema);
+
 const Orders: Model<IOrders> = mongoose.model<IOrders>("Orders", ordersSchema);
 const Menus: Model<IMenu> = mongoose.model<IMenu>("Menu", menuSchema);
 const Company: Model<ICompany> = mongoose.model<ICompany>("Company", companySchema);
@@ -108,4 +144,4 @@ const Ingredients: Model<IIngredients> = mongoose.model<IIngredients>("Ingredien
 
 
 
-export { Company, Ingredients, Menus, Orders };
+export { Company, Ingredients, Menus, Orders, AboutUs, TermsConditions, PrivacyPolicy };

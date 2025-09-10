@@ -134,7 +134,6 @@ const updateMenus = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-
 const getMenusSuggested = catchAsync(async (req: Request, res: Response) => {
     const result = await DashboardService.getMenusSuggested();
     sendResponse(res, {
@@ -266,7 +265,85 @@ const deleteEmployerProfiles = catchAsync(async (req: Request, res: Response) =>
 });
 
 
+const getAllOderAdmin = catchAsync(async (req: Request, res: Response) => {
+    const payload = req.query;
+    const result = await DashboardService.getAllOderAdmin(payload);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
+
+// ====================
+const addTermsConditions = catchAsync(async (req: Request, res: Response) => {
+    const result = await DashboardService.addTermsConditions(req.body);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
+
+const getTermsConditions = catchAsync(async (req: Request, res: Response) => {
+    const result = await DashboardService.getTermsConditions();
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
+
+const addPrivacyPolicy = catchAsync(async (req: Request, res: Response) => {
+    const result = await DashboardService.addPrivacyPolicy(req.body);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
+
+const getPrivacyPolicy = catchAsync(async (req: Request, res: Response) => {
+    const result = await DashboardService.getPrivacyPolicy();
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
+
+const addAboutUs = catchAsync(async (req: Request, res: Response) => {
+    const result = await DashboardService.addAboutUs(req.body);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
+
+const getAboutUs = catchAsync(async (req: Request, res: Response) => {
+    const result = await DashboardService.getAboutUs();
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Successful',
+        data: result,
+    });
+});
 export const DashboardController = {
+    addTermsConditions,
+    getTermsConditions,
+    addPrivacyPolicy,
+    getPrivacyPolicy,
+    addAboutUs,
+    getAboutUs,
+    getAllOderAdmin,
     deleteEmployerProfiles,
     sendReviews,
     getUserFavorites,

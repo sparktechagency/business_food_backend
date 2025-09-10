@@ -1,8 +1,6 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 import { IEmployer } from "./employer.interface";
 
-
-
 const EmployerSchema = new Schema<IEmployer>(
   {
     authId: {

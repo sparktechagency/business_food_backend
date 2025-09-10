@@ -19,6 +19,7 @@ router.patch("/companies/:id",
 router.delete("/companies/:id",
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.deleteCompany);
+
 // ===ingredient manage==================
 router.get('/get-ingredient-list',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
@@ -81,6 +82,7 @@ router.post('/send_reviews',
     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
     DashboardController.sendReviews
 );
+
 // =========
 router.get('/employer-profile',
     auth(ENUM_USER_ROLE.COMPANY),
@@ -88,5 +90,41 @@ router.get('/employer-profile',
 router.get('/delete_employer_profile/:id',
     auth(ENUM_USER_ROLE.COMPANY),
     DashboardController.deleteEmployerProfiles);
+
+// =ADMIN=========
+router.get('/get-all-orders',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getAllOderAdmin);
+
+// router.get('/delete_employer_profile/:id',
+//     auth(ENUM_USER_ROLE.COMPANY),
+//     DashboardController.deleteEmployerProfiles);
+// ========================
+router.get('/get-all-orders',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getAllOderAdmin);
+
+// =================
+router.post('/addupdate-termsConditions',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.addTermsConditions,
+);
+router.get('/get-rules',
+    DashboardController.getTermsConditions,
+);
+router.post('/addupdate-privacy-policy',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.addPrivacyPolicy,
+);
+router.get('/get-privacy-policy',
+    DashboardController.getPrivacyPolicy,
+);
+router.post('/addupdate-about-us',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.addAboutUs,
+);
+router.get('/get-about-us',
+    DashboardController.getAboutUs,
+);
 
 export const DashboardRoutes = router;

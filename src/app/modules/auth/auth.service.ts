@@ -170,12 +170,8 @@ const loginAccount = async (payload: LoginPayload) => {
   if (!isAuth) {
     throw new ApiError(404, "User does not exist");
   }
-  if (!isAuth.isActive) {
-    throw new ApiError(401, "Please activate your account then try to login");
-  }
-  if (isAuth.is_block) {
-    throw new ApiError(403, "You are blocked. Contact support");
-  }
+  if (!isAuth.isActive) throw new ApiError(401, "Please activate your account then try to login");
+  if (isAuth.is_block) throw new ApiError(403, "You are blocked. Contact support");
   if (
     isAuth.password &&
     !(await Auth.isPasswordMatched(password, isAuth.password))
@@ -187,11 +183,12 @@ const loginAccount = async (payload: LoginPayload) => {
   let userDetails: any;
   let role;
 
-  console.log("===", isAuth)
-
   switch (isAuth.role) {
     case ENUM_USER_ROLE.EMPLOYER:
       userDetails = await Employer.findOne({ authId: isAuth._id }).populate("authId");
+      const company = await Company.findById(userDetails?.company_id);
+      if (!company) throw new ApiError(404, "Your Company does not exist!");
+      if (company.status !== "active") throw new ApiError(401, "Your company isn’t active. Please try to login later.");
       role = ENUM_USER_ROLE.EMPLOYER;
       break;
     case ENUM_USER_ROLE.ADMIN:

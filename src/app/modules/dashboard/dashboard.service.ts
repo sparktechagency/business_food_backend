@@ -3,7 +3,7 @@ import QueryBuilder from "../../../builder/QueryBuilder";
 import { ENUM_USER_ROLE } from "../../../enums/user";
 import ApiError from "../../../errors/ApiError";
 import { ICompany, IIngredients, IMenu, IOrders, IQuery, IQueryParams } from "./dashboard.interface";
-import { Company, Ingredients, Menus, Orders } from "./dashboard.model";
+import { AboutUs, Company, Ingredients, Menus, Orders, PrivacyPolicy, TermsConditions } from "./dashboard.model";
 import Auth from "../auth/auth.model";
 import sendEmail from "../../../utils/sendEmail";
 import { companyAccountCreatedByAdminEmail } from "../../../mails/company.email";
@@ -74,7 +74,7 @@ const deleteCompany = async (id: string) => {
 
 const getAllCompany = async (queryParams: IQueryParams) => {
     if (queryParams.searchTerm) {
-        delete queryParams.page
+        delete queryParams.page;
     }
 
     const queryBuilder = new QueryBuilder<ICompany>(Company.find(), queryParams);
@@ -87,13 +87,29 @@ const getAllCompany = async (queryParams: IQueryParams) => {
         .fields()
         .modelQuery;
 
-    const company = await companyQuery.exec();
+    const companies = await companyQuery.exec();
+
+    const companyIds = companies.map(c => c._id);
+    const employerCounts = await Employer.aggregate([
+        { $match: { company_id: { $in: companyIds }, status: "active" } },
+        { $group: { _id: "$company_id", totalEmployers: { $sum: 1 } } },
+    ]);
+
+    const companyWithCounts = companies.map(c => {
+        const countObj = employerCounts.find(ec => ec._id.toString() === c._id.toString());
+        return {
+            // @ts-ignore
+            ...c.toObject(),
+            totalEmployers: countObj ? countObj.totalEmployers : 0,
+        };
+    });
+
     const pagination = await queryBuilder.countTotal();
 
-    return { company, pagination };
+    return { company: companyWithCounts, pagination };
 };
 
-// ===========================
+// =============================================
 const createIngredient = async (req: Request) => {
     try {
         const { name, quantity, unit } = req.body as IIngredients;
@@ -534,9 +550,7 @@ const getUserInvoice = async (
             path: "menus_id",
             select: "price",
         })
-        .sort({ date: -1 })
-    // .skip(skip)
-    // .limit(parseInt(limit));
+        .sort({ date: -1 });
 
     const totalPrice = orders.reduce((sum, order) => {
         const price = (order.menus_id as any)?.price || 0;
@@ -550,7 +564,7 @@ const getUserInvoice = async (
     };
 };
 
-// ================
+// =============================================
 const addRemoveFavorites = async (authId: string, menuId: Types.ObjectId) => {
     const menu = await Menus.findById(menuId);
     if (!menu) {
@@ -627,7 +641,120 @@ const deleteEmployerProfiles = async (userId: string, profileId: string) => {
     };
 };
 
+// ============================================
+const getAllOderAdmin = async (
+    query: IQuery
+): Promise<{ orders: IOrders[]; total: number; page: number; limit: number }> => {
+
+    const { page = "1", limit = "10", mealType, status, date } = query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const filter: any = {};
+
+    if (mealType) filter.mealType = mealType;
+    if (status) filter.status = status;
+    if (date) {
+        const dayStart = new Date(date);
+        if (isNaN(dayStart.getTime())) {
+            throw new Error("Invalid date format. Please use a valid date.");
+        }
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+        filter.date = { $gte: dayStart, $lte: dayEnd };
+    }
+
+    const total = await Orders.countDocuments(filter);
+
+    const orders = await Orders.find(filter)
+        .populate({
+            path: "user",
+            select: "name email address phone_number profile_image",
+        })
+        .populate({
+            path: "menus_id",
+            select: "-nutrition",
+        })
+        .sort({ date: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+    return {
+        orders,
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+    };
+};
+const updateOrderStatus = async (query: IQuery) => {
+    const { page = "1", limit = "10", mealType, status, date } = query;
+};
+
+// ======================
+
+
+const addTermsConditions = async (payload: any) => {
+    const checkIsExist = await TermsConditions.findOne();
+    if (checkIsExist) {
+        return await TermsConditions.findOneAndUpdate({}, payload, {
+            new: true,
+
+            runValidators: true,
+        });
+    } else {
+        return await TermsConditions.create(payload);
+    }
+};
+
+const getTermsConditions = async () => {
+    return await TermsConditions.findOne();
+};
+
+const addPrivacyPolicy = async (payload: any) => {
+    const checkIsExist = await PrivacyPolicy.findOne();
+    if (checkIsExist) {
+        return await PrivacyPolicy.findOneAndUpdate({}, payload, {
+            new: true,
+
+            runValidators: true,
+        });
+    } else {
+        return await PrivacyPolicy.create(payload);
+    }
+};
+
+const getPrivacyPolicy = async () => {
+    return await PrivacyPolicy.findOne();
+};
+
+
+const addAboutUs = async (payload: any) => {
+    const checkIsExist = await AboutUs.findOne();
+    if (checkIsExist) {
+        return await AboutUs.findOneAndUpdate({}, payload, {
+            new: true,
+
+            runValidators: true,
+        });
+    } else {
+        return await AboutUs.create(payload);
+    }
+};
+
+const getAboutUs = async () => {
+    return await AboutUs.findOne();
+};
+
 export const DashboardService = {
+    addAboutUs,
+    getAboutUs,
+    addPrivacyPolicy,
+    getPrivacyPolicy,
+    addTermsConditions,
+    getTermsConditions,
+    updateOrderStatus,
+    getAllOderAdmin,
     deleteEmployerProfiles,
     sendReviews,
     getUserFavorites,
