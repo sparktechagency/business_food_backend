@@ -372,8 +372,19 @@ const updateCompanyPaymentMonthly = catchAsync(async (req: Request, res: Respons
     });
 });
 
+const getCompanyDetails = catchAsync(async (req: Request, res: Response) => {
+    const company_id = req.params.company_id as string;
+    const result = await DashboardService.getCompanyDetails(company_id);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Updates Company Payments successfully!',
+        data: result,
+    });
+});
 
 export const DashboardController = {
+    getCompanyDetails,
     getAllCompanyPayment,
     updateOrderStatus,
     addTermsConditions,

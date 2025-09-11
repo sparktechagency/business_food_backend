@@ -129,9 +129,14 @@ router.get('/get_all_company_payment',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getAllCompanyPayment,
 );
-router.get('/update_company_payment_monthly',
+router.patch('/update_company_payment_monthly',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.updateCompanyPaymentMonthly,
 );
+router.get('/get_company_details/:company_id',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.updateCompanyPaymentMonthly,
+);
+
 
 export const DashboardRoutes = router;

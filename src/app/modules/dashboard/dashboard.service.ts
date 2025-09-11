@@ -839,7 +839,7 @@ const getAllCompanyPayment = async (query: any) => {
                             $cond: [
                                 { $eq: [{ $size: "$orders" }, 0] },
                                 true,
-                                { $allElementsTrue: { $map: { input: "$orders", as: "o", in: { $eq: ["$$o.paymentStatus", "paid"] } } } }
+                                { $allElementsTrue: { $map: { input: "$orders", as: "o", in: { $eq: ["$$o.paymentStatus", "Paid"] } } } }
                             ]
                         },
                         "Paid",
@@ -897,7 +897,7 @@ const updateCompanyPaymentMonthly = async (query: any) => {
 
     const result = await Orders.updateMany(
         {
-            company: new mongoose.Types.ObjectId(company_id),
+            company: company_id,
             date: { $gte: monthStart, $lt: monthEnd }
         },
         {
@@ -905,15 +905,39 @@ const updateCompanyPaymentMonthly = async (query: any) => {
         }
     );
 
+
+
     return {
         message: "Company monthly payments updated successfully!",
-        modifiedCount: result.modifiedCount,
+        modifiedCount: result,
     };
 };
 
+const getCompanyDetails = async (query: any) => {
+    const { company_id } = query;
 
+    if (!company_id) {
+        throw new ApiError(404, "Missing the required fields company_id!");
+    }
+
+    const company = await Company.findById(company_id);
+    if (!company) {
+        throw new ApiError(404, "Company id is wrong or company not found!");
+    }
+
+    const totalOder = await Orders.countDocuments({ company: company_id })
+    const totalEmployers = await Employer.countDocuments({ company_id })
+
+    return {
+        totalOder,
+        totalEmployers,
+        company
+    }
+};
 
 export const DashboardService = {
+
+    getCompanyDetails,
     getAllCompanyPayment,
     addAboutUs,
     getAboutUs,
