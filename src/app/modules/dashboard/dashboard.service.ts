@@ -766,7 +766,155 @@ const getAboutUs = async () => {
 };
 // ======================================
 
+const getAllCompanyPayment = async (query: any) => {
+    const { year, month, page = 1, limit = 10, searchTerm } = query;
+
+    if (!year || !month) {
+        throw new ApiError(404, "Year and month not found!");
+    }
+
+    const skip = (page - 1) * limit;
+    const monthNumber = new Date(`${month} 1, ${year}`).getMonth() + 1;
+
+    const matchStage: any = { status: "active" };
+    if (searchTerm) {
+        matchStage.name = { $regex: searchTerm, $options: "i" };
+    }
+
+    const totalCompanies = await Company.countDocuments(matchStage);
+
+    const totalPage = Math.ceil(totalCompanies / Number(limit));
+
+    const pipeline: any[] = [
+        { $match: matchStage },
+
+        {
+            $lookup: {
+                from: "orders",
+                let: { companyId: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$company", "$$companyId"] },
+                                    { $eq: [{ $year: "$date" }, Number(year)] },
+                                    { $eq: [{ $month: "$date" }, monthNumber] },
+                                ],
+                            },
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: "menus",
+                            localField: "menus_id",
+                            foreignField: "_id",
+                            as: "menu",
+                        },
+                    },
+                    {
+                        $unwind: {
+                            path: "$menu",
+                            preserveNullAndEmptyArrays: true,
+                        },
+                    },
+                    {
+                        $project: {
+                            paymentStatus: 1,
+                            price: "$menu.price",
+                        },
+                    },
+                ],
+                as: "orders",
+            },
+        },
+
+        {
+            $addFields: {
+                totalOrder: { $size: "$orders" },
+                totalPrice: { $sum: "$orders.price" },
+                paymentStatus: {
+                    $cond: [
+                        {
+                            $cond: [
+                                { $eq: [{ $size: "$orders" }, 0] },
+                                true,
+                                { $allElementsTrue: { $map: { input: "$orders", as: "o", in: { $eq: ["$$o.paymentStatus", "paid"] } } } }
+                            ]
+                        },
+                        "Paid",
+                        "Unpaid"
+                    ],
+                },
+                month: month,
+            },
+        },
+
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                email: 1,
+                totalOrder: 1,
+                totalPrice: 1,
+                paymentStatus: 1,
+                month: 1,
+            },
+        },
+
+        { $skip: skip },
+        { $limit: Number(limit) },
+    ];
+
+    const data = await Company.aggregate(pipeline);
+
+    return {
+        company: data,
+        pagination: {
+            page: Number(page),
+            limit: Number(limit),
+            total: totalCompanies,
+            totalPage,
+        },
+    };
+};
+
+const updateCompanyPaymentMonthly = async (query: any) => {
+    const { status, company_id, month, year } = query;
+
+    if (!status || !company_id || !month || !year) {
+        throw new ApiError(404, "Missing the required fields (status, company_id, month, year)!");
+    }
+
+    const company = await Company.findById(company_id);
+    if (!company) {
+        throw new ApiError(404, "Company id is wrong or company not found!");
+    }
+
+    const monthStart = new Date(`${year}-${month}-01T00:00:00.000Z`);
+    const monthEnd = new Date(monthStart);
+    monthEnd.setMonth(monthEnd.getMonth() + 1);
+
+    const result = await Orders.updateMany(
+        {
+            company: new mongoose.Types.ObjectId(company_id),
+            date: { $gte: monthStart, $lt: monthEnd }
+        },
+        {
+            $set: { paymentStatus: status }
+        }
+    );
+
+    return {
+        message: "Company monthly payments updated successfully!",
+        modifiedCount: result.modifiedCount,
+    };
+};
+
+
+
 export const DashboardService = {
+    getAllCompanyPayment,
     addAboutUs,
     getAboutUs,
     addPrivacyPolicy,
@@ -797,6 +945,7 @@ export const DashboardService = {
     createScheduleOrder,
     getUserOrders,
     getUserInvoice,
-    addRemoveFavorites
+    addRemoveFavorites,
+    updateCompanyPaymentMonthly
 };
 

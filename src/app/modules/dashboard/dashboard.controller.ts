@@ -347,7 +347,34 @@ const updateOrderStatus = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+
+
+const getAllCompanyPayment = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const result = await DashboardService.getAllCompanyPayment(query);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Get All Company Payments successfully!',
+        data: result,
+    });
+});
+
+
+const updateCompanyPaymentMonthly = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const result = await DashboardService.updateCompanyPaymentMonthly(query);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Updates Company Payments successfully!',
+        data: result,
+    });
+});
+
+
 export const DashboardController = {
+    getAllCompanyPayment,
     updateOrderStatus,
     addTermsConditions,
     getTermsConditions,
@@ -378,5 +405,6 @@ export const DashboardController = {
     getEmployerProfile,
     createScheduleOrder,
     getUserOrders,
-    getUserInvoice
+    getUserInvoice,
+    updateCompanyPaymentMonthly
 };

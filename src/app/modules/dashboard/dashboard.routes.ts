@@ -4,7 +4,6 @@ import { ENUM_USER_ROLE } from '../../../enums/user';
 import { DashboardController } from './dashboard.controller';
 import { uploadFile } from '../../middlewares/fileUploader';
 import { EmployerController } from '../employer/employer.controller';
-
 const router = express.Router();
 
 // =Company Mange=====================
@@ -95,32 +94,15 @@ router.patch('/approved_employer',
     auth(ENUM_USER_ROLE.COMPANY),
     EmployerController.approvedAccount);
 
-// =ADMIN=========
-router.get('/get-all-orders',
-    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-    DashboardController.getAllOderAdmin);
-
-// router.get('/delete_employer_profile/:id',
-//     auth(ENUM_USER_ROLE.COMPANY),
-//     DashboardController.deleteEmployerProfiles);
-
-// ========================
+// =ADMIN========= 
 router.get('/get-all-orders',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getAllOderAdmin);
 router.patch('/update-order-status',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.updateOrderStatus);
-// =======================================
 
-router.get('/get-company-orders',
-    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-    DashboardController.getAllOderAdmin);
-router.patch('/update-order-status',
-    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-    DashboardController.updateOrderStatus);
 // =======================================
-// =================
 router.post('/addupdate-termsConditions',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.addTermsConditions,
@@ -141,6 +123,15 @@ router.post('/addupdate-about-us',
 );
 router.get('/get-about-us',
     DashboardController.getAboutUs,
+);
+// ==========================
+router.get('/get_all_company_payment',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getAllCompanyPayment,
+);
+router.get('/update_company_payment_monthly',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.updateCompanyPaymentMonthly,
 );
 
 export const DashboardRoutes = router;

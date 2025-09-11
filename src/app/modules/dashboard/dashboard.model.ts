@@ -1,6 +1,5 @@
 import mongoose, { Model, Schema } from "mongoose";
 import { ICompany, IIngredients, IMenu, IOrders } from "./dashboard.interface";
-import { number } from "zod";
 
 const companySchema = new Schema<ICompany>(
     {
@@ -27,47 +26,6 @@ const companySchema = new Schema<ICompany>(
     },
     { timestamps: true }
 );
-
-const ingredientsSchema = new Schema<IIngredients>(
-    {
-        name: { type: String, required: true },
-        quantity: { type: Number, required: true },
-        unit: { type: String, required: true },
-    },
-    { timestamps: true }
-);
-
-const menuSchema = new Schema<IMenu>(
-    {
-        weekStart: { type: Date, required: true },
-        weekEnd: { type: Date, required: true },
-        mealType: {
-            type: String,
-            enum: ["Breakfast", "Lunch", "Dinner"],
-            required: true,
-        },
-        image: { type: String },
-        dishName: { type: String, required: true },
-        description: { type: String },
-        ratting: { type: Number, default: 0 },
-        calories: { type: Number },
-        quantity: { type: Number },
-        price: { type: Number, required: true },
-        favorite: { type: [String], ref: "Auth", default: [] },
-        nutrition: {
-            type: [Object],
-            required: true,
-        },
-        notes: {
-            type: String,
-        },
-        status: {
-            type: String,
-        }
-    },
-    { timestamps: true }
-);
-
 const ordersSchema = new Schema<IOrders>(
     {
         user: {
@@ -101,9 +59,56 @@ const ordersSchema = new Schema<IOrders>(
             enum: ["pending", "complete", "cancel"],
             required: true
         },
+        paymentStatus: {
+            type: String,
+            enum: ["Paid", "Unpaid"],
+            default: "Unpaid"
+        },
     },
     { timestamps: true }
 );
+const menuSchema = new Schema<IMenu>(
+    {
+        weekStart: { type: Date, required: true },
+        weekEnd: { type: Date, required: true },
+        mealType: {
+            type: String,
+            enum: ["Breakfast", "Lunch", "Dinner"],
+            required: true,
+        },
+        image: { type: String },
+        dishName: { type: String, required: true },
+        description: { type: String },
+        ratting: { type: Number, default: 0 },
+        calories: { type: Number },
+        quantity: { type: Number },
+        price: { type: Number, required: true },
+        favorite: { type: [String], ref: "Auth", default: [] },
+        nutrition: {
+            type: [Object],
+            required: true,
+        },
+        notes: {
+            type: String,
+        },
+        status: {
+            type: String,
+        }
+    },
+    { timestamps: true }
+);
+
+const ingredientsSchema = new Schema<IIngredients>(
+    {
+        name: { type: String, required: true },
+        quantity: { type: Number, required: true },
+        unit: { type: String, required: true },
+    },
+    { timestamps: true }
+);
+
+
+
 
 const termsAndConditionsSchema = new mongoose.Schema(
     {

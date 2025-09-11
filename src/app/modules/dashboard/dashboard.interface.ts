@@ -28,6 +28,7 @@ export interface IIngredients {
 
 export interface IOrders {
     user: mongoose.Schema.Types.ObjectId;
+    paymentStatus: string;
     userTypes: string;
     company: mongoose.Schema.Types.ObjectId;
     date: Date;
