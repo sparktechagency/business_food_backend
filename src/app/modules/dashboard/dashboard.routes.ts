@@ -3,6 +3,7 @@ import auth from '../../middlewares/auth';
 import { ENUM_USER_ROLE } from '../../../enums/user';
 import { DashboardController } from './dashboard.controller';
 import { uploadFile } from '../../middlewares/fileUploader';
+import { EmployerController } from '../employer/employer.controller';
 
 const router = express.Router();
 
@@ -87,9 +88,12 @@ router.post('/send_reviews',
 router.get('/employer-profile',
     auth(ENUM_USER_ROLE.COMPANY),
     DashboardController.getEmployerProfile);
-router.get('/delete_employer_profile/:id',
+router.delete('/delete_employer_profile/:id',
     auth(ENUM_USER_ROLE.COMPANY),
     DashboardController.deleteEmployerProfiles);
+router.patch('/approved_employer',
+    auth(ENUM_USER_ROLE.COMPANY),
+    EmployerController.approvedAccount);
 
 // =ADMIN=========
 router.get('/get-all-orders',
@@ -99,11 +103,23 @@ router.get('/get-all-orders',
 // router.get('/delete_employer_profile/:id',
 //     auth(ENUM_USER_ROLE.COMPANY),
 //     DashboardController.deleteEmployerProfiles);
+
 // ========================
 router.get('/get-all-orders',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getAllOderAdmin);
+router.patch('/update-order-status',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.updateOrderStatus);
+// =======================================
 
+router.get('/get-company-orders',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getAllOderAdmin);
+router.patch('/update-order-status',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.updateOrderStatus);
+// =======================================
 // =================
 router.post('/addupdate-termsConditions',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),

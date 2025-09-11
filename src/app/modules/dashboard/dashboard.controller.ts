@@ -336,7 +336,19 @@ const getAboutUs = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+
+const updateOrderStatus = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const result = await DashboardService.updateOrderStatus(query);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Status update successfully!',
+        data: result,
+    });
+});
 export const DashboardController = {
+    updateOrderStatus,
     addTermsConditions,
     getTermsConditions,
     addPrivacyPolicy,

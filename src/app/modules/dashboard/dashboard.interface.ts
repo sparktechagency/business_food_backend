@@ -70,6 +70,8 @@ export interface IQuery {
     page?: string;
     limit?: string;
     mealType?: string;
+    menuId?: string;
+    orderId?: string;
     status?: string;
     date?: string;
     month?: string;

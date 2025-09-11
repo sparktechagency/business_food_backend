@@ -13,6 +13,7 @@ import { IReqUser } from "../auth/auth.interface";
 import { IEmployer } from "../employer/employer.interface";
 import Employer from "../employer/employer.model";
 import mongoose, { Types } from "mongoose";
+import AppError from "../../../errors/AppError";
 
 const createCompany = async (payload: any) => {
     const { password, confirmPassword, email, ...other } = payload;
@@ -687,13 +688,32 @@ const getAllOderAdmin = async (
         limit: parseInt(limit),
     };
 };
+
 const updateOrderStatus = async (query: IQuery) => {
-    const { page = "1", limit = "10", mealType, status, date } = query;
+    const { orderId, status } = query;
+    if (!orderId || !status) {
+        throw new AppError(404, "Missing the require finds")
+    }
+
+    const allowedStatuses = ["pending", "in-progress", "complete", "cancel"];
+    if (!allowedStatuses.includes(status)) {
+        throw new AppError(400, `Invalid status value: ${status}`);
+    }
+
+    const updatedOrder = await Orders.findByIdAndUpdate(
+        orderId,
+        { status },
+        { new: true, runValidators: true }
+    );
+
+    if (!updatedOrder) {
+        throw new AppError(404, "Order not found");
+    }
+
+    return updatedOrder
 };
 
 // ======================
-
-
 const addTermsConditions = async (payload: any) => {
     const checkIsExist = await TermsConditions.findOne();
     if (checkIsExist) {
@@ -728,7 +748,6 @@ const getPrivacyPolicy = async () => {
     return await PrivacyPolicy.findOne();
 };
 
-
 const addAboutUs = async (payload: any) => {
     const checkIsExist = await AboutUs.findOne();
     if (checkIsExist) {
@@ -745,6 +764,7 @@ const addAboutUs = async (payload: any) => {
 const getAboutUs = async () => {
     return await AboutUs.findOne();
 };
+// ======================================
 
 export const DashboardService = {
     addAboutUs,
