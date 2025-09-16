@@ -374,7 +374,7 @@ const updateCompanyPaymentMonthly = catchAsync(async (req: Request, res: Respons
 
 const getCompanyDetails = catchAsync(async (req: Request, res: Response) => {
     const company_id = req.params.company_id as string;
-    const result = await DashboardService.getCompanyDetails(company_id);
+    const result = await DashboardService.getCompanyDetails(company_id as string);
     sendResponse(res, {
         statusCode: 200,
         success: true,
@@ -383,7 +383,20 @@ const getCompanyDetails = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getCompanyEmployer = catchAsync(async (req: Request, res: Response) => {
+    const company_id = req.params.company_id as string;
+    const query = req.query;
+    const result = await DashboardService.getCompanyEmployer(company_id as string, query as any);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Updates Company Payments Successfully!',
+        data: result,
+    });
+});
 export const DashboardController = {
+    getCompanyEmployer,
     getCompanyDetails,
     getAllCompanyPayment,
     updateOrderStatus,

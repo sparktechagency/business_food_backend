@@ -223,7 +223,7 @@ const createMenus = async (files: any, payload: IMenu) => {
             throw new ApiError(400, "Image is required");
         }
 
-        const image: string = `/images/profile/${files.image[0].filename}`;
+        const image: string = `/images/image/${files.image[0].filename}`;
 
         if (nutrition) {
             if (typeof nutrition === "string") {
@@ -244,7 +244,7 @@ const createMenus = async (files: any, payload: IMenu) => {
 const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) => {
     try {
         if (files?.image && files.image.length > 0) {
-            payload.image = `/images/profile/${files.image[0].filename}`;
+            payload.image = `/images/image/${files.image[0].filename}`;
         }
 
         const updatedMenu = await Menus.findByIdAndUpdate(
@@ -291,6 +291,7 @@ const getAllMenus = async (queryParams: IQueryParams, authId: string) => {
         .search(["dishName", "mealType"])
         .filter()
         .sort()
+        .rangeFilter()
         .paginate()
         .fields()
         .dateFilter()
@@ -764,8 +765,8 @@ const addAboutUs = async (payload: any) => {
 const getAboutUs = async () => {
     return await AboutUs.findOne();
 };
-// ======================================
 
+// ======================================
 const getAllCompanyPayment = async (query: any) => {
     const { year, month, page = 1, limit = 10, searchTerm } = query;
 
@@ -913,8 +914,8 @@ const updateCompanyPaymentMonthly = async (query: any) => {
     };
 };
 
-const getCompanyDetails = async (query: any) => {
-    const { company_id } = query;
+const getCompanyDetails = async (id: any) => {
+    const company_id = id;
 
     if (!company_id) {
         throw new ApiError(404, "Missing the required fields company_id!");
@@ -925,18 +926,127 @@ const getCompanyDetails = async (query: any) => {
         throw new ApiError(404, "Company id is wrong or company not found!");
     }
 
-    const totalOder = await Orders.countDocuments({ company: company_id })
-    const totalEmployers = await Employer.countDocuments({ company_id })
+    const [totalOrder, totalEmployers] = await Promise.all([
+        Orders.countDocuments({ company: company_id }),
+        Employer.countDocuments({ company: company_id })
+    ]);
 
     return {
-        totalOder,
+        totalOrder,
         totalEmployers,
         company
-    }
+    };
 };
 
-export const DashboardService = {
+const getCompanyEmployer = async (company_id: string, query: any) => {
+    const company = await Company.findById(company_id);
+    if (!company) {
+        throw new ApiError(404, "Company Not Found!");
+    }
 
+    const { year, month, page = 1, limit = 10, searchTerm } = query;
+
+    if (!year || !month) {
+        throw new ApiError(404, "Year and month not found!");
+    }
+
+    const skip = (page - 1) * limit;
+    const monthNumber = new Date(`${month} 1, ${year}`).getMonth() + 1;
+
+    const matchStage: any = { status: "active", company_id: new mongoose.Types.ObjectId(company_id) };
+    if (searchTerm) {
+        matchStage.name = { $regex: searchTerm, $options: "i" };
+    }
+
+    const totalEmployers = await Employer.countDocuments(matchStage);
+    const totalPage = Math.ceil(totalEmployers / Number(limit));
+
+    const pipeline: any[] = [
+        { $match: matchStage },
+        {
+            $lookup: {
+                from: "orders",
+                let: { employerId: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$employer", "$$employerId"] },
+                                    { $eq: [{ $year: "$date" }, Number(year)] },
+                                    { $eq: [{ $month: "$date" }, monthNumber] },
+                                ],
+                            },
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: "menus",
+                            localField: "menus_id",
+                            foreignField: "_id",
+                            as: "menu",
+                        },
+                    },
+                    { $unwind: { path: "$menu", preserveNullAndEmptyArrays: true } },
+                    {
+                        $project: {
+                            paymentStatus: 1,
+                            price: "$menu.price",
+                        },
+                    },
+                ],
+                as: "orders",
+            },
+        },
+        {
+            $addFields: {
+                totalOrder: { $size: "$orders" },
+                totalPrice: { $sum: "$orders.price" },
+                paymentStatus: {
+                    $cond: [
+                        { $gt: [{ $size: "$orders" }, 0] },
+                        { $arrayElemAt: ["$orders.paymentStatus", 0] },
+                        null,
+                    ],
+                },
+                month: monthNumber,
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                email: 1,
+                profile_image: 1,
+                phone_number: 1,
+                status: 1,
+                totalOrder: 1,
+                totalPrice: 1,
+                paymentStatus: 1,
+                month: 1,
+            },
+        },
+        { $skip: skip },
+        { $limit: Number(limit) },
+    ];
+
+    const data = await Employer.aggregate(pipeline);
+
+    return {
+        employers: data,
+        pagination: {
+            page: Number(page),
+            limit: Number(limit),
+            total: totalEmployers,
+            totalPage,
+        },
+    };
+};
+
+
+
+export const DashboardService = {
+    getCompanyEmployer,
     getCompanyDetails,
     getAllCompanyPayment,
     addAboutUs,
