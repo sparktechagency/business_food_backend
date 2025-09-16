@@ -383,10 +383,10 @@ const getCompanyDetails = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const getCompanyEmployer = catchAsync(async (req: Request, res: Response) => {
+const getCompanyEmployerOrder = catchAsync(async (req: Request, res: Response) => {
     const company_id = req.params.company_id as string;
     const query = req.query;
-    const result = await DashboardService.getCompanyEmployer(company_id as string, query as any);
+    const result = await DashboardService.getCompanyEmployerOrder(company_id as string, query as any);
 
     sendResponse(res, {
         statusCode: 200,
@@ -396,7 +396,7 @@ const getCompanyEmployer = catchAsync(async (req: Request, res: Response) => {
     });
 });
 export const DashboardController = {
-    getCompanyEmployer,
+    getCompanyEmployerOrder,
     getCompanyDetails,
     getAllCompanyPayment,
     updateOrderStatus,

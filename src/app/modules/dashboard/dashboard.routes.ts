@@ -137,9 +137,9 @@ router.get('/get_company_details/:company_id',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getCompanyDetails,
 );
-// router.get('/get_company_order/:company_id',
-//     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-//     DashboardController.getCompanyEmpolyer,
-// );
+router.get('/get_company_order/:company_id',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getCompanyEmployerOrder,
+);
 
 export const DashboardRoutes = router;

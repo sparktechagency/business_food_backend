@@ -938,13 +938,14 @@ const getCompanyDetails = async (id: any) => {
     };
 };
 
-const getCompanyEmployer = async (company_id: string, query: any) => {
+const getCompanyEmployerOrder = async (company_id: string, query: any) => {
     const company = await Company.findById(company_id);
     if (!company) {
         throw new ApiError(404, "Company Not Found!");
     }
 
     const { year, month, page = 1, limit = 10, searchTerm } = query;
+    console.log("company_id", year, month, page, limit, searchTerm)
 
     if (!year || !month) {
         throw new ApiError(404, "Year and month not found!");
@@ -953,91 +954,82 @@ const getCompanyEmployer = async (company_id: string, query: any) => {
     const skip = (page - 1) * limit;
     const monthNumber = new Date(`${month} 1, ${year}`).getMonth() + 1;
 
-    const matchStage: any = { status: "active", company_id: new mongoose.Types.ObjectId(company_id) };
-    if (searchTerm) {
-        matchStage.name = { $regex: searchTerm, $options: "i" };
-    }
+    // Match orders belonging to company and month/year
+    const matchStage: any = {
+        company: new mongoose.Types.ObjectId(company_id),
+        $expr: {
+            $and: [
+                { $eq: [{ $year: "$date" }, Number(year)] },
+                { $eq: [{ $month: "$date" }, monthNumber] },
+            ],
+        },
+    };
 
-    const totalEmployers = await Employer.countDocuments(matchStage);
-    const totalPage = Math.ceil(totalEmployers / Number(limit));
+    if (searchTerm) {
+        // Match employer name or email (when userTypes = Employer)
+        matchStage.$or = [
+            { "employer.name": { $regex: searchTerm, $options: "i" } },
+            { "employer.email": { $regex: searchTerm, $options: "i" } },
+        ];
+    }
 
     const pipeline: any[] = [
         { $match: matchStage },
         {
             $lookup: {
-                from: "orders",
-                let: { employerId: "$_id" },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ["$employer", "$$employerId"] },
-                                    { $eq: [{ $year: "$date" }, Number(year)] },
-                                    { $eq: [{ $month: "$date" }, monthNumber] },
-                                ],
-                            },
-                        },
-                    },
-                    {
-                        $lookup: {
-                            from: "menus",
-                            localField: "menus_id",
-                            foreignField: "_id",
-                            as: "menu",
-                        },
-                    },
-                    { $unwind: { path: "$menu", preserveNullAndEmptyArrays: true } },
-                    {
-                        $project: {
-                            paymentStatus: 1,
-                            price: "$menu.price",
-                        },
-                    },
-                ],
-                as: "orders",
+                from: "employers", // collection name
+                localField: "user", // order.user (ObjectId)
+                foreignField: "_id",
+                as: "employer",
             },
         },
+        { $unwind: { path: "$employer", preserveNullAndEmptyArrays: true } },
         {
-            $addFields: {
-                totalOrder: { $size: "$orders" },
-                totalPrice: { $sum: "$orders.price" },
-                paymentStatus: {
-                    $cond: [
-                        { $gt: [{ $size: "$orders" }, 0] },
-                        { $arrayElemAt: ["$orders.paymentStatus", 0] },
-                        null,
-                    ],
-                },
-                month: monthNumber,
+            $lookup: {
+                from: "menus",
+                localField: "menus_id",
+                foreignField: "_id",
+                as: "menu",
             },
         },
+        { $unwind: { path: "$menu", preserveNullAndEmptyArrays: true } },
         {
             $project: {
                 _id: 1,
-                name: 1,
-                email: 1,
-                profile_image: 1,
-                phone_number: 1,
+                mealType: 1,
+                date: 1,
                 status: 1,
-                totalOrder: 1,
-                totalPrice: 1,
                 paymentStatus: 1,
-                month: 1,
+                "employer._id": 1,
+                "employer.name": 1,
+                "employer.email": 1,
+                "employer.profile_image": 1,
+                "employer.phone_number": 1,
+                menuName: "$menu.name",
+                menuPrice: "$menu.price",
             },
         },
         { $skip: skip },
         { $limit: Number(limit) },
     ];
 
-    const data = await Employer.aggregate(pipeline);
+    const data = await Orders.aggregate(pipeline);
+
+    // Count total matching orders
+    const totalOrder = await Orders.aggregate([
+        { $match: matchStage },
+        { $count: "count" },
+    ]);
+
+    const totalCount = totalOrder.length > 0 ? totalOrder[0].count : 0;
+    const totalPage = Math.ceil(totalCount / Number(limit));
 
     return {
-        employers: data,
+        orders: data,
         pagination: {
             page: Number(page),
             limit: Number(limit),
-            total: totalEmployers,
+            total: totalCount,
             totalPage,
         },
     };
@@ -1046,7 +1038,7 @@ const getCompanyEmployer = async (company_id: string, query: any) => {
 
 
 export const DashboardService = {
-    getCompanyEmployer,
+    getCompanyEmployerOrder,
     getCompanyDetails,
     getAllCompanyPayment,
     addAboutUs,
