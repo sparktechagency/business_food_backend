@@ -1035,8 +1035,6 @@ const getCompanyEmployerOrder = async (company_id: string, query: any) => {
     };
 };
 
-
-
 export const DashboardService = {
     getCompanyEmployerOrder,
     getCompanyDetails,
