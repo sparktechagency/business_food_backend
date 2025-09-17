@@ -107,9 +107,6 @@ const ingredientsSchema = new Schema<IIngredients>(
     { timestamps: true }
 );
 
-
-
-
 const termsAndConditionsSchema = new mongoose.Schema(
     {
         description: {

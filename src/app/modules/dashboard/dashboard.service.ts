@@ -15,6 +15,14 @@ import Employer from "../employer/employer.model";
 import mongoose, { Types } from "mongoose";
 import AppError from "../../../errors/AppError";
 
+const getDashboardHomeTotalCount = async () => {
+    // const totalCompanies = await Company.countDocuments();
+    // const totalEmployers = await Employer.countDocuments({ status: "active" });
+    // const totalOrders = await Orders.countDocuments({ status: "pending" });
+    // const totalIncome = await Orders.countDocuments({ paymentStatus: "Paid" });
+    // return { company: companyWithCounts, pagination };
+};
+
 const createCompany = async (payload: any) => {
     const { password, confirmPassword, email, ...other } = payload;
 
@@ -770,15 +778,27 @@ const getAboutUs = async () => {
 const getAllCompanyPayment = async (query: any) => {
     let { year, month, page = 1, limit = 10, searchTerm } = query;
     // console.log("year, month", year, month)
-    if (!year || !month) {
-        const now = new Date();
-        year = year ? Number(year) : now.getFullYear();
-        month = month ? month : now.toLocaleString("en-US", { month: "long" });
+    const now = new Date();
+
+    year = year ? Number(year) : now.getFullYear();
+
+    let monthNumber: number;
+    let monthText: string;
+
+    if (!month) {
+        monthNumber = now.getMonth() + 1;
+        monthText = now.toLocaleString("en-US", { month: "long" });
+    } else if (!isNaN(Number(month))) {
+        monthNumber = Number(month);
+        monthText = new Date(`${year}-${monthNumber}-01`).toLocaleString("en-US", {
+            month: "long",
+        });
+    } else {
+        monthText = month;
+        monthNumber = new Date(`${month} 1, ${year}`).getMonth() + 1;
     }
 
-
     const skip = (page - 1) * limit;
-    const monthNumber = new Date(`${month} 1, ${year}`).getMonth() + 1;
 
     const matchStage: any = { status: "active" };
     if (searchTerm) {
@@ -850,7 +870,8 @@ const getAllCompanyPayment = async (query: any) => {
                         "Unpaid"
                     ],
                 },
-                month: month,
+                month: monthText,
+                year: year,
             },
         },
 
@@ -863,6 +884,7 @@ const getAllCompanyPayment = async (query: any) => {
                 totalPrice: 1,
                 paymentStatus: 1,
                 month: 1,
+                year: 1,
             },
         },
 
@@ -946,7 +968,6 @@ const getCompanyEmployerOrder = async (company_id: string, query: any) => {
     if (!company) {
         throw new ApiError(404, "Company Not Found!");
     }
-
     let { year, month, page = 1, limit = 10, searchTerm } = query;
     console.log("year, month", year, month)
 
@@ -1040,7 +1061,36 @@ const getCompanyEmployerOrder = async (company_id: string, query: any) => {
     };
 };
 
+const getAdminEmployerProfile = async (user: IReqUser, query: any) => {
+    const { userId } = user;
+    const { page, searchTerm, limit } = query;
+
+    if (query.searchTerm) {
+        delete query.page;
+    }
+
+    const queryBuilder = new QueryBuilder<IEmployer>(
+        Employer.find(),
+        query
+    );
+
+    let employerQuery = queryBuilder
+        .search(["name", "email"])
+        .filter()
+        .sort()
+        .paginate()
+        .fields()
+        .modelQuery;
+
+    const employers = await employerQuery.exec();
+    const pagination = await queryBuilder.countTotal();
+
+    return { employers, pagination };
+};
+
 export const DashboardService = {
+    getDashboardHomeTotalCount,
+    getAdminEmployerProfile,
     getCompanyEmployerOrder,
     getCompanyDetails,
     getAllCompanyPayment,

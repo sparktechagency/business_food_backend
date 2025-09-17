@@ -4,6 +4,16 @@ import { Request, Response } from 'express';
 import { DashboardService } from "./dashboard.service";
 import { IReqUser } from "../auth/auth.interface";
 
+const getDashboardHomeTotalCount = catchAsync(async (req: Request, res: Response) => {
+    // const result = await DashboardService.getDashboardHomeTotalCount(req.query as any);
+    // sendResponse(res, {
+    //     statusCode: 200,
+    //     success: true,
+    //     message: "Count retrieved successfully",
+    //     data: result,
+    // });
+});
+
 const getAllCompany = catchAsync(async (req: Request, res: Response) => {
     const result = await DashboardService.getAllCompany(req.query as any);
     sendResponse(res, {
@@ -348,7 +358,6 @@ const updateOrderStatus = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-
 const getAllCompanyPayment = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
     const result = await DashboardService.getAllCompanyPayment(query);
@@ -395,7 +404,23 @@ const getCompanyEmployerOrder = catchAsync(async (req: Request, res: Response) =
         data: result,
     });
 });
+
+const getAdminEmployerProfile = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const user = req.user;
+    const result = await DashboardService.getAdminEmployerProfile(user as IReqUser, query);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "successfully",
+        data: result,
+    });
+});
+
+
 export const DashboardController = {
+    getDashboardHomeTotalCount,
+    getAdminEmployerProfile,
     getCompanyEmployerOrder,
     getCompanyDetails,
     getAllCompanyPayment,

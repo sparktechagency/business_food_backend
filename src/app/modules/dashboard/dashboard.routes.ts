@@ -7,6 +7,12 @@ import { EmployerController } from '../employer/employer.controller';
 const router = express.Router();
 
 // =Company Mange=====================
+router.get('/get-total-count',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getDashboardHomeTotalCount);
+
+
+// =Company Mange=====================
 router.get('/get-company-list',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getAllCompany);
@@ -65,8 +71,7 @@ router.patch('/toggle_favorite/:id',
     DashboardController.toggleFavorite);
 router.get('/get_user_favorites',
     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
-    DashboardController.getUserFavorites
-);
+    DashboardController.getUserFavorites);
 
 // =========
 router.post('/create-order',
@@ -124,6 +129,7 @@ router.post('/addupdate-about-us',
 router.get('/get-about-us',
     DashboardController.getAboutUs,
 );
+
 // ==========================
 router.get('/get_all_company_payment',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
@@ -141,5 +147,10 @@ router.get('/get_company_order/:company_id',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getCompanyEmployerOrder,
 );
+
+// ===========================
+router.get('/admin-employer-profile',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getAdminEmployerProfile);
 
 export const DashboardRoutes = router;
