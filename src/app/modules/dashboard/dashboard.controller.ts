@@ -362,7 +362,7 @@ const getAllCompanyPayment = catchAsync(async (req: Request, res: Response) => {
 
 
 const updateCompanyPaymentMonthly = catchAsync(async (req: Request, res: Response) => {
-    const query = req.query;
+    const query = req.body;
     const result = await DashboardService.updateCompanyPaymentMonthly(query);
     sendResponse(res, {
         statusCode: 200,

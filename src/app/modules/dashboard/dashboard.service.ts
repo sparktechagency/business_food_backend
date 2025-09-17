@@ -768,11 +768,14 @@ const getAboutUs = async () => {
 
 // ======================================
 const getAllCompanyPayment = async (query: any) => {
-    const { year, month, page = 1, limit = 10, searchTerm } = query;
-
+    let { year, month, page = 1, limit = 10, searchTerm } = query;
+    // console.log("year, month", year, month)
     if (!year || !month) {
-        throw new ApiError(404, "Year and month not found!");
+        const now = new Date();
+        year = year ? Number(year) : now.getFullYear();
+        month = month ? month : now.toLocaleString("en-US", { month: "long" });
     }
+
 
     const skip = (page - 1) * limit;
     const monthNumber = new Date(`${month} 1, ${year}`).getMonth() + 1;
@@ -944,11 +947,13 @@ const getCompanyEmployerOrder = async (company_id: string, query: any) => {
         throw new ApiError(404, "Company Not Found!");
     }
 
-    const { year, month, page = 1, limit = 10, searchTerm } = query;
-    console.log("company_id", year, month, page, limit, searchTerm)
+    let { year, month, page = 1, limit = 10, searchTerm } = query;
+    console.log("year, month", year, month)
 
     if (!year || !month) {
-        throw new ApiError(404, "Year and month not found!");
+        const now = new Date();
+        year = year ? Number(year) : now.getFullYear();
+        month = month ? month : now.toLocaleString("en-US", { month: "long" });
     }
 
     const skip = (page - 1) * limit;
