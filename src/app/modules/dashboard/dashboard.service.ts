@@ -15,13 +15,113 @@ import Employer from "../employer/employer.model";
 import mongoose, { Types } from "mongoose";
 import AppError from "../../../errors/AppError";
 
-const getDashboardHomeTotalCount = async () => {
-    // const totalCompanies = await Company.countDocuments();
-    // const totalEmployers = await Employer.countDocuments({ status: "active" });
-    // const totalOrders = await Orders.countDocuments({ status: "pending" });
-    // const totalIncome = await Orders.countDocuments({ paymentStatus: "Paid" });
-    // return { company: companyWithCounts, pagination };
+export const getTotalIncome = async () => {
+    const result = await Orders.aggregate([
+      {
+        $match: {
+          status: "complete",     
+          paymentStatus: "Paid",  
+        },
+      },
+      {
+        $lookup: {
+          from: "menus",             
+          localField: "menus_id",
+          foreignField: "_id",
+          as: "menu",
+        },
+      },
+      { $unwind: "$menu" },
+      {
+        $group: {
+          _id: null,
+          totalIncome: { $sum: "$menu.price" },
+        },
+      },
+    ]);
+  
+    return result.length > 0 ? result[0].totalIncome : 0;
+  };
+
+//  ===================================
+ 
+
+const getDashboardUserOverview = async () => {
+  const users = await Auth.aggregate([
+    {
+      $group: {
+        _id: { $month: "$createdAt" }, // group by month number (1–12)
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { "_id": 1 } }, // sort by month
+  ]);
+ 
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  const result = months.map((m, i) => {
+    const found = users.find(u => u._id === i + 1);
+    return {
+      month: m,
+      users: found ? found.count : 0,
+    };
+  });
+
+  return { result };
 };
+ 
+const getDashboardEarningOverview = async (year: number) => {
+    const earnings = await Orders.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+          status: "complete",       // only completed orders
+          paymentStatus: "Paid",    // only paid orders
+        },
+      },
+      {
+        $lookup: {
+          from: "menus", // collection name in MongoDB
+          localField: "menus_id",
+          foreignField: "_id",
+          as: "menu",
+        },
+      },
+      { $unwind: "$menu" }, // flatten menu
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalIncome: { $sum: "$menu.price" },
+        },
+      },
+      { $sort: { "_id": 1 } },
+    ]);
+   
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+  
+    // Format result
+    const result = months.map((m, i) => {
+      const found = earnings.find(e => e._id === i + 1);
+      return {
+        month: m,
+        income: found ? found.totalIncome : 0,
+      };
+    });
+  
+    // Add yearly total
+    const yearlyTotal = result.reduce((sum, m) => sum + m.income, 0);
+  
+    return { year, yearlyTotal, result };
+  };
 
 const createCompany = async (payload: any) => {
     const { password, confirmPassword, email, ...other } = payload;
@@ -1089,7 +1189,8 @@ const getAdminEmployerProfile = async (user: IReqUser, query: any) => {
 };
 
 export const DashboardService = {
-    getDashboardHomeTotalCount,
+    getDashboardEarningOverview,
+    getDashboardUserOverview, 
     getAdminEmployerProfile,
     getCompanyEmployerOrder,
     getCompanyDetails,

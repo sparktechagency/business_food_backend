@@ -1,18 +1,51 @@
 import catchAsync from "../../../shared/catchasync";
 import sendResponse from "../../../shared/sendResponse";
 import { Request, Response } from 'express';
-import { DashboardService } from "./dashboard.service";
+import { DashboardService, getTotalIncome } from "./dashboard.service";
 import { IReqUser } from "../auth/auth.interface";
+import { Company, Orders } from "./dashboard.model";
+import Employer from "../employer/employer.model";
+import ApiError from "../../../errors/ApiError";
 
 const getDashboardHomeTotalCount = catchAsync(async (req: Request, res: Response) => {
-    // const result = await DashboardService.getDashboardHomeTotalCount(req.query as any);
-    // sendResponse(res, {
-    //     statusCode: 200,
-    //     success: true,
-    //     message: "Count retrieved successfully",
-    //     data: result,
-    // });
-});
+    const totalCompanies = await Company.countDocuments();
+    const totalEmployers = await Employer.countDocuments({ status: "active" });
+    const totalOrders = await Orders.countDocuments({ status: "pending" });
+    const totalIncome = await  getTotalIncome()
+    const result = {totalCompanies, totalEmployers,totalOrders, totalIncome };
+ 
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Count retrieved successfully",
+        data: result,
+    });
+}) ;
+
+const getDashboardUserOverview = catchAsync(async (req: Request, res: Response) => {
+    // const years = req.params.years as string;
+    // if(!years) throw new ApiError(400,'Years in requerd for get data')
+   const result =await DashboardService.getDashboardUserOverview()
+ 
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "User overview retrieved successfully",
+        data: result,
+    });
+}) ;
+const getDashboardEarningOverview = catchAsync(async (req: Request, res: Response) => {
+    const years = req.params.years as string;
+    if(!years) throw new ApiError(400,'Years in requerd for get data')
+   const result =await DashboardService.getDashboardUserOverview()
+ 
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "income overview retrieved successfully",
+        data: result,
+    });
+}) ;
 
 const getAllCompany = catchAsync(async (req: Request, res: Response) => {
     const result = await DashboardService.getAllCompany(req.query as any);
@@ -419,6 +452,8 @@ const getAdminEmployerProfile = catchAsync(async (req: Request, res: Response) =
 
 
 export const DashboardController = {
+    getDashboardEarningOverview,
+    getDashboardUserOverview,
     getDashboardHomeTotalCount,
     getAdminEmployerProfile,
     getCompanyEmployerOrder,

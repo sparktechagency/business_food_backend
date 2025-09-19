@@ -10,7 +10,12 @@ const router = express.Router();
 router.get('/get-total-count',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getDashboardHomeTotalCount);
-
+router.get('/get-earning-overview',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getDashboardEarningOverview);
+router.get('/get-user-overview',
+    auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+    DashboardController.getDashboardUserOverview);
 
 // =Company Mange=====================
 router.get('/get-company-list',
