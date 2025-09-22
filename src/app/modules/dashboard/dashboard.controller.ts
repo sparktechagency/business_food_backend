@@ -11,41 +11,41 @@ const getDashboardHomeTotalCount = catchAsync(async (req: Request, res: Response
     const totalCompanies = await Company.countDocuments();
     const totalEmployers = await Employer.countDocuments({ status: "active" });
     const totalOrders = await Orders.countDocuments({ status: "pending" });
-    const totalIncome = await  getTotalIncome()
-    const result = {totalCompanies, totalEmployers,totalOrders, totalIncome };
- 
+    const totalIncome = await getTotalIncome()
+    const result = { totalCompanies, totalEmployers, totalOrders, totalIncome };
+
     sendResponse(res, {
         statusCode: 200,
         success: true,
         message: "Count retrieved successfully",
         data: result,
     });
-}) ;
+});
 
 const getDashboardUserOverview = catchAsync(async (req: Request, res: Response) => {
     // const years = req.params.years as string;
     // if(!years) throw new ApiError(400,'Years in requerd for get data')
-   const result =await DashboardService.getDashboardUserOverview()
- 
+    const result = await DashboardService.getDashboardUserOverview()
+
     sendResponse(res, {
         statusCode: 200,
         success: true,
         message: "User overview retrieved successfully",
         data: result,
     });
-}) ;
+});
 const getDashboardEarningOverview = catchAsync(async (req: Request, res: Response) => {
-    const years = req.params.years as string;
-    if(!years) throw new ApiError(400,'Years in requerd for get data')
-   const result =await DashboardService.getDashboardUserOverview()
- 
+    const years = req.query.years as string;
+    if (!years) throw new ApiError(400, 'Years in require for get data')
+    const result = await DashboardService.getDashboardEarningOverview(Number(years) as number)
+
     sendResponse(res, {
         statusCode: 200,
         success: true,
         message: "income overview retrieved successfully",
         data: result,
     });
-}) ;
+});
 
 const getAllCompany = catchAsync(async (req: Request, res: Response) => {
     const result = await DashboardService.getAllCompany(req.query as any);
@@ -450,8 +450,20 @@ const getAdminEmployerProfile = catchAsync(async (req: Request, res: Response) =
     });
 });
 
+const getUserNotifications = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user;
+    const result = await DashboardService.getUserNotifications(user as IReqUser);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "successfully",
+        data: result,
+    });
+});
+
 
 export const DashboardController = {
+    getUserNotifications,
     getDashboardEarningOverview,
     getDashboardUserOverview,
     getDashboardHomeTotalCount,

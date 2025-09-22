@@ -157,5 +157,11 @@ router.get('/get_company_order/:company_id',
 router.get('/admin-employer-profile',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getAdminEmployerProfile);
+// ===============================
+router.get('/get-notifications',
+    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
+    DashboardController.getUserNotifications);
+
+
 
 export const DashboardRoutes = router;

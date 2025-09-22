@@ -3,7 +3,7 @@ import QueryBuilder from "../../../builder/QueryBuilder";
 import { ENUM_USER_ROLE } from "../../../enums/user";
 import ApiError from "../../../errors/ApiError";
 import { ICompany, IIngredients, IMenu, IOrders, IQuery, IQueryParams } from "./dashboard.interface";
-import { AboutUs, Company, Ingredients, Menus, Orders, PrivacyPolicy, TermsConditions } from "./dashboard.model";
+import { AboutUs, Company, Ingredients, Menus, Notification, Orders, PrivacyPolicy, TermsConditions } from "./dashboard.model";
 import Auth from "../auth/auth.model";
 import sendEmail from "../../../utils/sendEmail";
 import { companyAccountCreatedByAdminEmail } from "../../../mails/company.email";
@@ -17,111 +17,133 @@ import AppError from "../../../errors/AppError";
 
 export const getTotalIncome = async () => {
     const result = await Orders.aggregate([
-      {
-        $match: {
-          status: "complete",     
-          paymentStatus: "Paid",  
+        {
+            $match: {
+                status: "complete",
+                paymentStatus: "Paid",
+            },
         },
-      },
-      {
-        $lookup: {
-          from: "menus",             
-          localField: "menus_id",
-          foreignField: "_id",
-          as: "menu",
+        {
+            $lookup: {
+                from: "menus",
+                localField: "menus_id",
+                foreignField: "_id",
+                as: "menu",
+            },
         },
-      },
-      { $unwind: "$menu" },
-      {
-        $group: {
-          _id: null,
-          totalIncome: { $sum: "$menu.price" },
+        { $unwind: "$menu" },
+        {
+            $group: {
+                _id: null,
+                totalIncome: { $sum: "$menu.price" },
+            },
         },
-      },
     ]);
-  
-    return result.length > 0 ? result[0].totalIncome : 0;
-  };
 
+    return result.length > 0 ? result[0].totalIncome : 0;
+};
+
+export const createNotifications = async ({ userId, companyId, message, title }: any) => {
+    await Notification.create({
+        userId,
+        companyId,
+        message,
+        title
+    })
+    return { message: "Notification created successfully" };
+
+}
 //  ===================================
- 
+const getUserNotifications = async (user: IReqUser) => {
+    const { userId, role } = user;
+    if (role === "EMPLOYER") {
+        const notifications = await Notification.find({ userId }).sort({ createdAt: -1 })
+        return { notifications };
+    } else if (role === "COMPANY") {
+        const notifications = await Notification.find({ userId }).sort({ createdAt: -1 })
+        return { notifications };
+    } else {
+        throw new ApiError(403, "Only EMPLOYER and COMPANY roles can access notifications");
+    }
+
+}
 
 const getDashboardUserOverview = async () => {
-  const users = await Auth.aggregate([
-    {
-      $group: {
-        _id: { $month: "$createdAt" }, // group by month number (1–12)
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { "_id": 1 } }, // sort by month
-  ]);
- 
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-  ];
+    const users = await Auth.aggregate([
+        {
+            $group: {
+                _id: { $month: "$createdAt" },
+                count: { $sum: 1 },
+            },
+        },
+        { $sort: { "_id": 1 } }, // sort by month
+    ]);
 
-  const result = months.map((m, i) => {
-    const found = users.find(u => u._id === i + 1);
-    return {
-      month: m,
-      users: found ? found.count : 0,
-    };
-  });
+    const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
 
-  return { result };
+    const result = months.map((m, i) => {
+        const found = users.find(u => u._id === i + 1);
+        return {
+            month: m,
+            users: found ? found.count : 0,
+        };
+    });
+
+    return { result };
 };
- 
+
 const getDashboardEarningOverview = async (year: number) => {
     const earnings = await Orders.aggregate([
-      {
-        $match: {
-          createdAt: {
-            $gte: new Date(`${year}-01-01`),
-            $lte: new Date(`${year}-12-31`),
-          },
-          status: "complete",       // only completed orders
-          paymentStatus: "Paid",    // only paid orders
+        {
+            $match: {
+                createdAt: {
+                    $gte: new Date(`${year}-01-01`),
+                    $lte: new Date(`${year}-12-31`),
+                },
+                status: "complete",
+                paymentStatus: "Paid",
+            },
         },
-      },
-      {
-        $lookup: {
-          from: "menus", // collection name in MongoDB
-          localField: "menus_id",
-          foreignField: "_id",
-          as: "menu",
+        {
+            $lookup: {
+                from: "menus", // collection name in MongoDB
+                localField: "menus_id",
+                foreignField: "_id",
+                as: "menu",
+            },
         },
-      },
-      { $unwind: "$menu" }, // flatten menu
-      {
-        $group: {
-          _id: { $month: "$createdAt" },
-          totalIncome: { $sum: "$menu.price" },
+        { $unwind: "$menu" }, // flatten menu
+        {
+            $group: {
+                _id: { $month: "$createdAt" },
+                totalIncome: { $sum: "$menu.price" },
+            },
         },
-      },
-      { $sort: { "_id": 1 } },
+        { $sort: { "_id": 1 } },
     ]);
-   
+
     const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
-  
+
     // Format result
     const result = months.map((m, i) => {
-      const found = earnings.find(e => e._id === i + 1);
-      return {
-        month: m,
-        income: found ? found.totalIncome : 0,
-      };
+        const found = earnings.find(e => e._id === i + 1);
+        return {
+            month: m,
+            income: found ? found.totalIncome : 0,
+        };
     });
-  
+
     // Add yearly total
     const yearlyTotal = result.reduce((sum, m) => sum + m.income, 0);
-  
+
     return { year, yearlyTotal, result };
-  };
+};
 
 const createCompany = async (payload: any) => {
     const { password, confirmPassword, email, ...other } = payload;
@@ -161,9 +183,16 @@ const createCompany = async (payload: any) => {
 
     other.authId = createAuth._id;
     other.email = email;
-    console.log("other", other)
 
     const newCompany = await Company.create(other);
+    if (newCompany) {
+        await createNotifications({
+            userId: createAuth._id,
+            companyId: newCompany._id,
+            title: "Welcome to Business Food Service 🍽️",
+            message: `Your company account has been created successfully. Start exploring our services!`
+        })
+    }
     return newCompany;
 };
 
@@ -819,6 +848,15 @@ const updateOrderStatus = async (query: IQuery) => {
         throw new AppError(404, "Order not found");
     }
 
+    if (status === "complete") {
+        await createNotifications({
+            userId: updatedOrder.user,
+            companyId: updatedOrder.company,
+            title: "Order Completed 🍽️",
+            message: `Your order with ID ${updatedOrder._id} has been marked as complete. Enjoy your meal!`
+        })
+    }
+
     return updatedOrder
 };
 
@@ -1031,7 +1069,17 @@ const updateCompanyPaymentMonthly = async (query: any) => {
         }
     );
 
-
+    if (result.modifiedCount === 0) {
+        throw new ApiError(400, "No orders found for the specified company and month to update.");
+    }
+    if (result.modifiedCount > 0 && status === "Paid") {
+        await createNotifications({
+            userId: null,
+            companyId: company._id,
+            title: "Monthly Payment Updated 💰",
+            message: `The payment status for your company's orders in ${monthStart.toLocaleString("en-US", { month: "long" })} ${year} has been updated to 'Paid'. Thank you for your prompt payment!`
+        })
+    }
 
     return {
         message: "Company monthly payments updated successfully!",
@@ -1170,7 +1218,10 @@ const getAdminEmployerProfile = async (user: IReqUser, query: any) => {
     }
 
     const queryBuilder = new QueryBuilder<IEmployer>(
-        Employer.find(),
+        Employer.find().populate({
+            path: "authId",
+            select: "is_block",
+        }),
         query
     );
 
@@ -1190,7 +1241,7 @@ const getAdminEmployerProfile = async (user: IReqUser, query: any) => {
 
 export const DashboardService = {
     getDashboardEarningOverview,
-    getDashboardUserOverview, 
+    getDashboardUserOverview,
     getAdminEmployerProfile,
     getCompanyEmployerOrder,
     getCompanyDetails,
@@ -1226,6 +1277,7 @@ export const DashboardService = {
     getUserOrders,
     getUserInvoice,
     addRemoveFavorites,
-    updateCompanyPaymentMonthly
+    updateCompanyPaymentMonthly,
+    getUserNotifications
 };
 

@@ -134,6 +134,16 @@ const aboutUsSchema = new mongoose.Schema(
     }
 );
 
+const notificationSchema = new Schema(
+    {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
+        companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
+        message: { type: String, required: true },
+        title: { type: String, required: true },
+    },
+    { timestamps: true }
+);
+
 const AboutUs = mongoose.model('AboutUs', aboutUsSchema);
 const TermsConditions = mongoose.model('TermsConditions', termsAndConditionsSchema);
 const PrivacyPolicy = mongoose.model('PrivacyPolicy', privacyPolicySchema);
@@ -142,8 +152,7 @@ const Orders: Model<IOrders> = mongoose.model<IOrders>("Orders", ordersSchema);
 const Menus: Model<IMenu> = mongoose.model<IMenu>("Menu", menuSchema);
 const Company: Model<ICompany> = mongoose.model<ICompany>("Company", companySchema);
 const Ingredients: Model<IIngredients> = mongoose.model<IIngredients>("Ingredients", ingredientsSchema);
+const Notification = mongoose.model("Notifications", notificationSchema);
 
 
-
-
-export { Company, Ingredients, Menus, Orders, AboutUs, TermsConditions, PrivacyPolicy };
+export { Company, Ingredients, Menus, Orders, AboutUs, TermsConditions, PrivacyPolicy, Notification };
