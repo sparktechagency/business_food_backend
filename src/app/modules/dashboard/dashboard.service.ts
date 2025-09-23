@@ -19,7 +19,7 @@ export const getTotalIncome = async () => {
     const result = await Orders.aggregate([
         {
             $match: {
-                status: "complete",
+                status: "Completed",
                 paymentStatus: "Paid",
             },
         },
@@ -103,7 +103,7 @@ const getDashboardEarningOverview = async (year: number) => {
                     $gte: new Date(`${year}-01-01`),
                     $lte: new Date(`${year}-12-31`),
                 },
-                status: "complete",
+                status: "Completed",
                 paymentStatus: "Paid",
             },
         },
@@ -833,7 +833,7 @@ const updateOrderStatus = async (query: IQuery) => {
         throw new AppError(404, "Missing the require finds")
     }
 
-    const allowedStatuses = ["pending", "in-progress", "complete", "cancel"];
+    const allowedStatuses = ["pending", "in-progress", "Completed", "Canceled"];
     if (!allowedStatuses.includes(status)) {
         throw new AppError(400, `Invalid status value: ${status}`);
     }
@@ -848,7 +848,7 @@ const updateOrderStatus = async (query: IQuery) => {
         throw new AppError(404, "Order not found");
     }
 
-    if (status === "complete") {
+    if (status === "Completed") {
         await createNotifications({
             userId: updatedOrder.user,
             companyId: updatedOrder.company,

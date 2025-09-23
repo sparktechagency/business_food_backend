@@ -11,7 +11,6 @@ import sendEmail from "../../../utils/sendEmail";
 import { ENUM_USER_ROLE } from "../../../enums/user";
 import { sendResetEmail } from "./sendResetMails";
 import { createActivationToken } from "../../../utils/createActivationToken";
-import { registrationSuccessEmailBody } from "../../../mails/user.register";
 import { resetEmailTemplate } from "../../../mails/reset.email";
 import { ActivationPayload, ChangePasswordPayload, ForgotPasswordPayload, IAuth, LoginPayload, ResetPasswordPayload } from "./auth.interface";
 import config from "../../../config";
@@ -170,8 +169,10 @@ const loginAccount = async (payload: LoginPayload) => {
   if (!isAuth) {
     throw new ApiError(404, "User does not exist");
   }
+
   if (!isAuth.isActive) throw new ApiError(401, "Please activate your account then try to login");
-  if (isAuth.is_block) throw new ApiError(403, "You are blocked. Contact support");
+  if (isAuth.is_block) throw new ApiError(403, "You are blocked. Contact with your company");
+
   if (
     isAuth.password &&
     !(await Auth.isPasswordMatched(password, isAuth.password))

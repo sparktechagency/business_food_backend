@@ -26,30 +26,27 @@ router.patch(
   auth(ENUM_USER_ROLE.COMPANY, ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.ADMIN),
   AuthController.changePassword
 );
-
 router.get(
   "/profile",
   auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY, ENUM_USER_ROLE.ADMIN),
   AuthController.getMyProfile
 );
-
 router.delete(
   "/delete-account",
   auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY, ENUM_USER_ROLE.ADMIN),
   AuthController.deleteMyAccount
 );
-
 router.patch(
   "/edit-profile",
   auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY, ENUM_USER_ROLE.ADMIN),
   uploadFile(),
   AuthController.updateMyProfile
 );
-
 router.get(
   "/get-company-public",
   AuthController.getAllCompany
 );
+
 // ========== ADMIN ACCESS BLOCK ACCOUNT ========== 
 router.patch(
   "/block-unblock",
