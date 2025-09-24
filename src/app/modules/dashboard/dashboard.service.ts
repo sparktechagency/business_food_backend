@@ -1290,7 +1290,7 @@ export const sendInvoiceEmail = async (user: IReqUser, month: string) => {
 
     await transporter.sendMail({
         from: config.smtp.smtp_mail,
-        to: company.email || "tayebrayhan101@gmail.com",
+        to: company.email,
         subject: `Invoice for ${monthName}`,
         html: sendInvoiceByEmailHTML({ name: company.name, month: monthName }),
         attachments: [
