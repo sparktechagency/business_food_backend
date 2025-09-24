@@ -967,6 +967,7 @@ const getAllCompanyPayment = async (query: any) => {
                                     { $eq: [{ $month: "$date" }, monthNumber] },
                                 ],
                             },
+                            status: "complete"
                         },
                     },
                     {
@@ -1247,7 +1248,7 @@ const monthNames = [
     "July", "August", "September", "October", "November", "December"
 ];
 
-export const sendInvoiceEmail = async (user: IReqUser, month: string) => {
+const sendInvoiceEmail = async (user: IReqUser, month: string) => {
     const { userId } = user;
 
     if (!month) throw new ApiError(400, "Month is required!");
