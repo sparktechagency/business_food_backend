@@ -394,7 +394,7 @@ const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) =
                 payload.nutrition = JSON.parse(payload.nutrition);
             }
         }
-
+        console.log("payload==", payload)
         const updatedMenu = await Menus.findByIdAndUpdate(
             menuId,
             { $set: payload },
