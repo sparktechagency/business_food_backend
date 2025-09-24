@@ -386,15 +386,20 @@ const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) =
         if (files?.image && files.image.length > 0) {
             payload.image = `/images/image/${files.image[0].filename}`;
         }
-        console.log("payload", payload)
-        if (payload?.nutrition) {
-            console.log("payload.nutrition", payload.nutrition)
+
+        // Handle nutrition field
+        if (payload.nutrition) {
             if (typeof payload.nutrition === "string") {
-                console.log("payload.nutrition", payload.nutrition)
-                payload.nutrition = JSON.parse(payload.nutrition);
+                try {
+                    payload.nutrition = JSON.parse(payload.nutrition);
+                } catch (parseError) {
+                    throw new ApiError(400, "Invalid nutrition format");
+                }
             }
         }
-        console.log("payload==", payload.nutrition)
+
+        console.log("Updating menu with payload:", payload);
+
         const updatedMenu = await Menus.findByIdAndUpdate(
             menuId,
             { $set: payload },
