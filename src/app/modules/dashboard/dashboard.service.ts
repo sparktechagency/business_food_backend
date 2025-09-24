@@ -386,9 +386,10 @@ const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) =
         if (files?.image && files.image.length > 0) {
             payload.image = `/images/image/${files.image[0].filename}`;
         }
-
+        console.log("payload", payload)
         if (payload?.nutrition) {
             if (typeof payload.nutrition === "string") {
+                console.log("payload.nutrition", payload.nutrition)
                 payload.nutrition = JSON.parse(payload.nutrition);
             }
         }
@@ -792,7 +793,7 @@ const deleteEmployerProfiles = async (userId: string, profileId: string) => {
 // ============================================
 const getAllOderAdmin = async (
     query: IQuery
-): Promise<{ orders: IOrders[]; total: number; page: number; limit: number }> => {
+): Promise<{ orders: IOrders[]; total: number; page: number; limit: number, totalPage: number }> => {
 
     const { page = "1", limit = "10", mealType, status, date } = query;
 
@@ -827,11 +828,13 @@ const getAllOderAdmin = async (
         .sort({ date: -1 })
         .skip(skip)
         .limit(parseInt(limit));
+    const totalPage = Math.ceil(total / parseInt(limit));
 
     return {
         orders,
         total,
         page: parseInt(page),
+        totalPage,
         limit: parseInt(limit),
     };
 };
