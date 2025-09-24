@@ -387,6 +387,12 @@ const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) =
             payload.image = `/images/image/${files.image[0].filename}`;
         }
 
+        if (payload?.nutrition) {
+            if (typeof payload.nutrition === "string") {
+                payload.nutrition = JSON.parse(payload.nutrition);
+            }
+        }
+
         const updatedMenu = await Menus.findByIdAndUpdate(
             menuId,
             { $set: payload },
