@@ -26,6 +26,7 @@ const companySchema = new Schema<ICompany>(
     },
     { timestamps: true }
 );
+
 const ordersSchema = new Schema<IOrders>(
     {
         user: {
@@ -67,6 +68,7 @@ const ordersSchema = new Schema<IOrders>(
     },
     { timestamps: true }
 );
+
 const menuSchema = new Schema<IMenu>(
     {
         weekStart: { type: Date, required: true },

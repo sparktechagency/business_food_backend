@@ -461,8 +461,21 @@ const getUserNotifications = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const sendEmailByInvoice = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user;
+    const month = req.query.month as string;
+    const result = await DashboardService.sendInvoiceEmail(user as IReqUser, month as string);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "successfully",
+        data: result,
+    });
+});
+
 
 export const DashboardController = {
+    sendEmailByInvoice,
     getUserNotifications,
     getDashboardEarningOverview,
     getDashboardUserOverview,

@@ -14,6 +14,10 @@ import { IEmployer } from "../employer/employer.interface";
 import Employer from "../employer/employer.model";
 import mongoose, { Types } from "mongoose";
 import AppError from "../../../errors/AppError";
+import { sendInvoiceByEmailHTML } from "../../../mails/invoice.mail";
+import { generateInvoicePDF } from "../../../utils/pdfGenerator";
+import fs from "fs";
+import nodemailer, { Transporter } from 'nodemailer';
 
 export const getTotalIncome = async () => {
     const result = await Orders.aggregate([
@@ -1238,7 +1242,70 @@ const getAdminEmployerProfile = async (user: IReqUser, query: any) => {
     return { employers, pagination };
 };
 
+const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+
+export const sendInvoiceEmail = async (user: IReqUser, month: string) => {
+    const { userId } = user;
+
+    if (!month) throw new ApiError(400, "Month is required!");
+
+    const company = await Company.findById(userId);
+    if (!company) throw new ApiError(404, "Company not found!");
+
+    const filter: any = { company: userId, status: "Completed" };
+    const [year, monthNumber] = month.split("-").map(Number);
+    const startDate = new Date(year, monthNumber - 1, 1);
+    const endDate = new Date(year, monthNumber, 0, 23, 59, 59, 999);
+    filter.date = { $gte: startDate, $lte: endDate };
+
+    const orders = await Orders.find(filter)
+        .populate({ path: "user", select: "name email address phone_number profile_image" })
+        .populate({ path: "menus_id", select: "price" })
+        .sort({ date: -1 });
+
+    if (!orders.length) throw new ApiError(404, "No completed orders found for this month!");
+
+    const totalPrice = orders.reduce((sum, order) => {
+        const price = (order.menus_id as any)?.price || 0;
+        return sum + price;
+    }, 0);
+
+    // generate PDF with logo
+    const pdfPath = await generateInvoicePDF(
+        orders as any,
+        totalPrice,
+        company.name || "Company",
+    );
+
+    const transporter = nodemailer.createTransport({
+        host: config.smtp.smtp_host,
+        port: parseInt(config.smtp.smtp_port as string),
+        auth: { user: config.smtp.smtp_mail, pass: config.smtp.smtp_password },
+    });
+
+    const monthName = `${monthNames[monthNumber - 1]} ${year}`;
+
+    await transporter.sendMail({
+        from: config.smtp.smtp_mail,
+        to: company.email || "tayebrayhan101@gmail.com",
+        subject: `Invoice for ${monthName}`,
+        html: sendInvoiceByEmailHTML({ name: company.name, month: monthName }),
+        attachments: [
+            { filename: `invoice-${month}.pdf`, path: pdfPath, contentType: "application/pdf" },
+        ],
+    });
+
+    fs.unlinkSync(pdfPath);
+
+    return { success: true, message: "Invoice sent successfully!" };
+};
+
+
 export const DashboardService = {
+    sendInvoiceEmail,
     getDashboardEarningOverview,
     getDashboardUserOverview,
     getAdminEmployerProfile,

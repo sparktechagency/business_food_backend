@@ -16,7 +16,10 @@ router.get('/get-earning-overview',
 router.get('/get-user-overview',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
     DashboardController.getDashboardUserOverview);
-
+// =========================
+router.post('/send-email-invoice',
+    auth(ENUM_USER_ROLE.COMPANY),
+    DashboardController.sendEmailByInvoice);
 // =Company Mange=====================
 router.get('/get-company-list',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
