@@ -383,27 +383,23 @@ const createMenus = async (files: any, payload: IMenu) => {
 
 const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) => {
     try {
-        if (files?.image && files.image.length > 0) {
+        if (files?.image?.[0]) {
             payload.image = `/images/image/${files.image[0].filename}`;
         }
 
-        const data = await Menus.findById(menuId);
-        let nutrition = [];
-        if (payload.nutrition) {
-            if (typeof payload.nutrition === "string") {
-                try {
-                    nutrition = JSON.parse(payload.nutrition);
-                } catch (parseError) {
-                    throw new ApiError(400, "Invalid nutrition format");
-                }
+        if (payload.nutrition && typeof payload.nutrition === "string") {
+            try {
+                payload.nutrition = JSON.parse(payload.nutrition);
+            } catch (parseError) {
+                throw new ApiError(400, "Invalid nutrition format");
             }
         }
-        delete payload.nutrition;
+
         console.log("Updating menu with payload:", payload);
 
         const updatedMenu = await Menus.findByIdAndUpdate(
             menuId,
-            { $set: payload, nutrition: nutrition.length ? nutrition : data?.nutrition },
+            { $set: payload },
             { new: true, runValidators: true }
         );
 
@@ -412,10 +408,14 @@ const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) =
         }
 
         return updatedMenu;
-    } catch (error) {
-        throw new ApiError(400, "Server error while updating menu");
+
+    } catch (error: any) {
+        console.error("Update menu error:", error);
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(500, "Server error while updating menu");
     }
 };
+
 
 const deleteMenu = async (menuId: string) => {
     try {
