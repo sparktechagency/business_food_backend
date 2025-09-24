@@ -387,22 +387,23 @@ const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) =
             payload.image = `/images/image/${files.image[0].filename}`;
         }
 
-        // Handle nutrition field
+        const data = await Menus.findById(menuId);
+        let nutrition = [];
         if (payload.nutrition) {
             if (typeof payload.nutrition === "string") {
                 try {
-                    payload.nutrition = JSON.parse(payload.nutrition);
+                    nutrition = JSON.parse(payload.nutrition);
                 } catch (parseError) {
                     throw new ApiError(400, "Invalid nutrition format");
                 }
             }
         }
-
+        delete payload.nutrition;
         console.log("Updating menu with payload:", payload);
 
         const updatedMenu = await Menus.findByIdAndUpdate(
             menuId,
-            { $set: payload },
+            { $set: payload, nutrition: nutrition.length ? nutrition : data?.nutrition },
             { new: true, runValidators: true }
         );
 
