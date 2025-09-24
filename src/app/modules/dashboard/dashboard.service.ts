@@ -793,7 +793,7 @@ const deleteEmployerProfiles = async (userId: string, profileId: string) => {
 // ============================================
 const getAllOderAdmin = async (
     query: IQuery
-): Promise<{ orders: IOrders[]; total: number; page: number; limit: number, totalPage: number }> => {
+): Promise<{ orders: IOrders[]; pagination: { page: number; total: number; limit: number, totalPage: number } }> => {
 
     const { page = "1", limit = "10", mealType, status, date } = query;
 
@@ -832,10 +832,12 @@ const getAllOderAdmin = async (
 
     return {
         orders,
-        total,
-        page: parseInt(page),
-        totalPage,
-        limit: parseInt(limit),
+        pagination: {
+            total,
+            page: parseInt(page),
+            totalPage,
+            limit: parseInt(limit),
+        }
     };
 };
 
