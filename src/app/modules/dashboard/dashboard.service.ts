@@ -388,6 +388,7 @@ const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) =
         }
         console.log("payload", payload)
         if (payload?.nutrition) {
+            console.log("payload.nutrition", payload.nutrition)
             if (typeof payload.nutrition === "string") {
                 console.log("payload.nutrition", payload.nutrition)
                 payload.nutrition = JSON.parse(payload.nutrition);
