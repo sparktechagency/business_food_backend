@@ -23,7 +23,7 @@ export const getTotalIncome = async () => {
     const result = await Orders.aggregate([
         {
             $match: {
-                status: "Completed",
+                status: "complete",
                 paymentStatus: "Paid",
             },
         },
@@ -106,7 +106,7 @@ const getDashboardEarningOverview = async (year: number) => {
                     $gte: new Date(`${year}-01-01`),
                     $lte: new Date(`${year}-12-31`),
                 },
-                status: "Completed",
+                status: "complete",
                 paymentStatus: "Paid",
             },
         },
@@ -836,7 +836,7 @@ const updateOrderStatus = async (query: IQuery) => {
         throw new AppError(404, "Missing the require finds")
     }
 
-    const allowedStatuses = ["pending", "in-progress", "Completed", "Canceled"];
+    const allowedStatuses = ["pending", "in-progress", "complete", "cancel"];
     if (!allowedStatuses.includes(status)) {
         throw new AppError(400, `Invalid status value: ${status}`);
     }
@@ -851,7 +851,7 @@ const updateOrderStatus = async (query: IQuery) => {
         throw new AppError(404, "Order not found");
     }
 
-    if (status === "Completed") {
+    if (status === "complete") {
         await createNotifications({
             userId: updatedOrder.user,
             companyId: updatedOrder.company,
@@ -1255,7 +1255,7 @@ export const sendInvoiceEmail = async (user: IReqUser, month: string) => {
     const company = await Company.findById(userId);
     if (!company) throw new ApiError(404, "Company not found!");
 
-    const filter: any = { company: userId, status: "Completed" };
+    const filter: any = { company: userId, status: "complete" };
     const [year, monthNumber] = month.split("-").map(Number);
     const startDate = new Date(year, monthNumber - 1, 1);
     const endDate = new Date(year, monthNumber, 0, 23, 59, 59, 999);
