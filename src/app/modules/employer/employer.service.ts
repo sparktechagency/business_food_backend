@@ -28,7 +28,7 @@ const approvedAccount = async (
     const [updatedAuth, updatedEmployer] = await Promise.all([
         Auth.findOneAndUpdate(
             { email: account.email },
-            { isActive: true },
+            { isActive: status === "active" ? true : false },
             { new: true }
         ),
         Employer.findByIdAndUpdate(employerId, { status }, { new: true }),

@@ -65,7 +65,6 @@ const getUserNotifications = async (user: IReqUser) => {
     } else {
         throw new ApiError(403, "Only EMPLOYER and COMPANY roles can access notifications");
     }
-
 }
 
 const getDashboardUserOverview = async () => {
