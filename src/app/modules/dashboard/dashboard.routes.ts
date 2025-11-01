@@ -107,6 +107,10 @@ router.patch('/approved_employer',
     auth(ENUM_USER_ROLE.COMPANY),
     EmployerController.approvedAccount);
 
+router.patch('/admin/approved_employer',
+    auth(ENUM_USER_ROLE.ADMIN),
+    EmployerController.approvedAccountAdmin);
+
 // =ADMIN========= 
 router.get('/get-all-orders',
     auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),

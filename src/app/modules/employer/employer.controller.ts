@@ -16,9 +16,21 @@ const approvedAccount = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const approvedAccountAdmin = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const result = await EmployerService.approvedAccountAdmin(req.user as IReqUser, query as any);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "User retrieved successfully",
+        data: result,
+    });
+});
+
 
 
 export const EmployerController = {
-    approvedAccount
+    approvedAccount,
+    approvedAccountAdmin
 };
 

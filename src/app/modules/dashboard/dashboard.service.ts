@@ -416,7 +416,6 @@ const updateMenu = async (files: any, menuId: string, payload: Partial<IMenu>) =
     }
 };
 
-
 const deleteMenu = async (menuId: string) => {
     try {
         const deletedMenu = await Menus.findByIdAndDelete(menuId);
@@ -591,7 +590,9 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
     const { userId, role } = user;
     const { menus_id, date } = payload;
 
+
     let company = new mongoose.Types.ObjectId(userId);
+    console.log('createScheduleOrder', userId, role)
 
     const menus = await Menus.findById(menus_id) as IMenu
     if (!menus) {
@@ -616,6 +617,8 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
         status: "pending",
         menus_id
     })
+
+    console.log('order', order)
 
     return order;
 };
@@ -712,6 +715,8 @@ const getUserInvoice = async (
         const price = (order.menus_id as any)?.price || 0;
         return sum + price;
     }, 0);
+
+    console.log('=====', totalPrice)
 
     return {
         orders,
