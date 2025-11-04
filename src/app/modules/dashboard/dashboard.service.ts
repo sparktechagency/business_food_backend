@@ -652,6 +652,8 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
     // -----------------------------
     // ✅ Create new order
     // -----------------------------
+
+    console.log("payload.time", payload.time)
     const order = await Orders.create({
         user: userId,
         userTypes,
