@@ -75,7 +75,7 @@ const menuSchema = new Schema<IMenu>(
         weekEnd: { type: Date, required: true },
         mealType: {
             type: String,
-            enum: ["Breakfast", "Lunch", "Dinner", "Vegano", "Diabetes"],
+            enum: ["Sopa", "Plato_Principal", "Guarnición", "Postre", "Diabetes", "Vegano", "Soup", "Dessert", "Main_Course", "Side_Dish", "Vegan", "Diabetes"],
             required: true,
         },
         image: { type: String },

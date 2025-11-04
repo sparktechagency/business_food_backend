@@ -52,7 +52,7 @@ export interface IMenu {
     ratting: Number;
     weekStart: Date;
     weekEnd: Date;
-    mealType: "Breakfast" | "Lunch" | "Dinner" | "Vegano" | "Diabetes";
+    mealType: "Breakfast" | "Lunch" | "Dinner" | "Vegano" | "Diabetes" | "Soup" | "Dessert" | "Main_Course" | "Side_Dish" | "Vegan" | "Diabetes";
     image: string;
     notes: string,
     status: string;
