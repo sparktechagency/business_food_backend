@@ -28,6 +28,7 @@ export interface IIngredients {
 
 export interface IOrders {
     user: mongoose.Schema.Types.ObjectId;
+    time: string;
     paymentStatus: string;
     userTypes: string;
     company: mongoose.Schema.Types.ObjectId;
@@ -49,6 +50,7 @@ export interface IQueryParams {
 
 
 export interface IMenu {
+    time: string;
     ratting: Number;
     weekStart: Date;
     weekEnd: Date;

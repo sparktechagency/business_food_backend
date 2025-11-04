@@ -658,6 +658,7 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
         company,
         mealType: menus.mealType,
         date: new Date(date),
+        time: payload.time,
         status: "pending",
         menus_id,
     });

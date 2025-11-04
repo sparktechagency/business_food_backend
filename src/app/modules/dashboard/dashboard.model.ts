@@ -55,6 +55,7 @@ const ordersSchema = new Schema<IOrders>(
             required: true,
         },
         date: { type: Date, required: true },
+        time: { type: String },
         status: {
             type: String,
             enum: ["pending", "complete", "cancel"],
