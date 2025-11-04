@@ -590,24 +590,68 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
     const { userId, role } = user;
     const { menus_id, date } = payload;
 
-
     let company = new mongoose.Types.ObjectId(userId);
-    console.log('createScheduleOrder', userId, role)
+    console.log('createScheduleOrder', userId, role);
 
-    const menus = await Menus.findById(menus_id) as IMenu
-    if (!menus) {
-        throw new ApiError(404, "Menu not found!")
-    }
+    // Get menu info
+    const menus = await Menus.findById(menus_id) as IMenu;
+    if (!menus) throw new ApiError(404, "Menu not found!");
 
     let userTypes: "Company" | "Employer" = role === ENUM_USER_ROLE.EMPLOYER ? "Employer" : "Company";
 
     if (role === ENUM_USER_ROLE.EMPLOYER) {
         const employer = await Employer.findById(userId) as any;
         if (!employer) throw new ApiError(404, "Employer not found");
-
         company = new mongoose.Types.ObjectId(employer.company_id);
     }
 
+    // -----------------------------
+    // 🧩 Validation: Check existing orders for this employee on that day
+    // -----------------------------
+    const sameDayStart = new Date(date);
+    sameDayStart.setHours(0, 0, 0, 0);
+    const sameDayEnd = new Date(date);
+    sameDayEnd.setHours(23, 59, 59, 999);
+
+    const existingOrders = await Orders.find({
+        user: userId,
+        date: { $gte: sameDayStart, $lte: sameDayEnd },
+    });
+
+    // Count per mealType
+    const mealCounts: Record<string, number> = {};
+    for (const order of existingOrders) {
+        mealCounts[order.mealType] = (mealCounts[order.mealType] || 0) + 1;
+    }
+
+    // Rules per mealType
+    const rules: Record<string, number> = {
+        Sopa: 1,
+        Soup: 1,
+        Plato_Principal: 1,
+        Main_Course: 1,
+        Guarnición: 2,
+        Side_Dish: 2,
+        Postre: 1,
+        Dessert: 1,
+        Vegano: 1,
+        Vegan: 1,
+        Diabetes: 1,
+    };
+
+    const maxAllowed = rules[menus.mealType] ?? 1;
+    const currentCount = mealCounts[menus.mealType] ?? 0;
+
+    if (currentCount >= maxAllowed) {
+        throw new ApiError(
+            400,
+            `You have already selected the maximum allowed number of ${menus.mealType.replace('_', ' ')} for this day.`
+        );
+    }
+
+    // -----------------------------
+    // ✅ Create new order
+    // -----------------------------
     const order = await Orders.create({
         user: userId,
         userTypes,
@@ -615,11 +659,10 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
         mealType: menus.mealType,
         date: new Date(date),
         status: "pending",
-        menus_id
-    })
+        menus_id,
+    });
 
-    console.log('order', order)
-
+    console.log('order', order);
     return order;
 };
 
