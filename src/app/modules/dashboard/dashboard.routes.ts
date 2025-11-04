@@ -96,7 +96,7 @@ router.post('/send_reviews',
     DashboardController.sendReviews
 );
 
-// =========
+// ==========================
 router.get('/employer-profile',
     auth(ENUM_USER_ROLE.COMPANY),
     DashboardController.getEmployerProfile);
