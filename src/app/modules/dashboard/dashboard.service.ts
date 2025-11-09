@@ -608,14 +608,23 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
     // -----------------------------
     // 🧩 Validation: Check existing orders for this employee on that day
     // -----------------------------
-    const sameDayStart = new Date(date);
-    sameDayStart.setHours(0, 0, 0, 0);
-    const sameDayEnd = new Date(date);
-    sameDayEnd.setHours(23, 59, 59, 999);
+    // const sameDayStart = new Date(date);
+    // sameDayStart.setHours(0, 0, 0, 0);
+    // const sameDayEnd = new Date(date);
+    // sameDayEnd.setHours(23, 59, 59, 999);
+
+    // const existingOrders = await Orders.find({
+    //     user: userId,
+    //     date: { $gte: sameDayStart, $lte: sameDayEnd },
+    // });
+
+    const orderDate = new Date(date);
+    const startTime = new Date(orderDate.getTime() - 24 * 60 * 60 * 1000); // 24h before
+    const endTime = orderDate;
 
     const existingOrders = await Orders.find({
         user: userId,
-        date: { $gte: sameDayStart, $lte: sameDayEnd },
+        date: { $gte: startTime, $lte: endTime },
     });
 
     // Count per mealType
@@ -652,7 +661,6 @@ const createScheduleOrder = async (user: IReqUser, payload: any): Promise<IOrder
     // -----------------------------
     // ✅ Create new order
     // -----------------------------
-
     console.log("payload.time", payload.time)
     const order = await Orders.create({
         user: userId,
