@@ -39,5 +39,4 @@ app.get('/', async (req: Request, res: Response) => {
 });
 
 app.use(globalErrorHandler);
-
 app.use(NotFoundHandler.handle);
