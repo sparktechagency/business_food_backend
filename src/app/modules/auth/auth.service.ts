@@ -186,22 +186,22 @@ const loginAccount = async (payload: LoginPayload) => {
 
   switch (isAuth.role) {
     case ENUM_USER_ROLE.EMPLOYER:
-      userDetails = await Employer.findOne({ authId: isAuth._id }).populate("authId");
+      userDetails = await Employer.findOne({ authId: isAuth?._id }).populate("authId");
       const company = await Company.findById(userDetails?.company_id);
       if (!company) throw new ApiError(404, "Your Company does not exist!");
       if (company.status !== "active") throw new ApiError(401, "Your company isn’t active. Please try to login later.");
       role = ENUM_USER_ROLE.EMPLOYER;
       break;
     case ENUM_USER_ROLE.ADMIN:
-      userDetails = await Admin.findOne({ authId: isAuth._id }).populate("authId");
+      userDetails = await Admin.findOne({ authId: isAuth?._id }).populate("authId");
       role = ENUM_USER_ROLE.ADMIN;
       break;
     case ENUM_USER_ROLE.COMPANY:
-      userDetails = await Company.findOne({ authId: isAuth._id }).populate("authId");
+      userDetails = await Company.findOne({ authId: isAuth?._id }).populate("authId");
       role = ENUM_USER_ROLE.COMPANY;
       break;
     case ENUM_USER_ROLE.SUPER_ADMIN:
-      userDetails = await Admin.findOne({ authId: isAuth._id }).populate("authId");
+      userDetails = await Admin.findOne({ authId: isAuth?._id }).populate("authId");
       role = ENUM_USER_ROLE.SUPER_ADMIN;
       break;
     default:
@@ -215,7 +215,7 @@ const loginAccount = async (payload: LoginPayload) => {
   );
 
   const refreshToken = jwtHelpers.createToken(
-    { authId, role, userId: userDetails._id },
+    { authId, role, userId: userDetails?._id },
     config.jwt.refresh_secret as string,
     config.jwt.refresh_expires_in as string
   );
