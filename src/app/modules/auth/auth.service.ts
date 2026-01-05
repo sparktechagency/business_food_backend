@@ -208,8 +208,10 @@ const loginAccount = async (payload: LoginPayload) => {
       throw new ApiError(400, "Invalid role provided!");
   }
 
+  console.log("userDetails", userDetails);
+
   const accessToken = jwtHelpers.createToken(
-    { authId, role, userId: userDetails._id },
+    { authId, role, userId: userDetails?._id },
     config.jwt.secret as string,
     config.jwt.expires_in as string
   );
