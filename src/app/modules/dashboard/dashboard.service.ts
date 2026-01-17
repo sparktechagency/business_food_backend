@@ -876,6 +876,7 @@ const sendReviews = async (payload: {
     menu.ratingCount = newCount;
 
     console.log("Updated Menu Rating:", {
+        ratingValue,
         ratting: menu.ratting,
         ratingCount: menu.ratingCount
     });
