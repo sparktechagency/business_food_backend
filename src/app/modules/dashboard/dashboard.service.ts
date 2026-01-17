@@ -431,10 +431,23 @@ const deleteMenu = async (menuId: string) => {
 };
 
 const getAllMenus = async (queryParams: IQueryParams, authId: string) => {
-    const { searchTerm, page = 1, limit = 10, sortBy, sortOrder, ...filters } = queryParams;
+    // ✅ Convert page & limit to numbers
+    const page = Number(queryParams.page) || 1;
+    const limit = Number(queryParams.limit) || 10;
+    const sortBy = queryParams.sortBy || "ratting";
+    const sortOrder = queryParams.sortOrder === "asc" ? 1 : -1;
+    const searchTerm = queryParams.searchTerm;
 
-    const matchStage: any = { status: "active", ...filters };
+    const matchStage: any = { status: "active" };
 
+    // Add other filters
+    for (const key in queryParams) {
+        if (!["page", "limit", "sortBy", "sortOrder", "searchTerm"].includes(key)) {
+            matchStage[key] = queryParams[key];
+        }
+    }
+
+    // Search
     if (searchTerm) {
         matchStage.$or = [
             { dishName: { $regex: searchTerm, $options: "i" } },
@@ -442,13 +455,18 @@ const getAllMenus = async (queryParams: IQueryParams, authId: string) => {
         ];
     }
 
+    // Aggregation pipeline
     const aggregationPipeline: any[] = [
         { $match: matchStage },
+
+        // Calculate favorite in DB (true/false)
         {
             $addFields: {
                 favorite: { $in: [new mongoose.Types.ObjectId(authId), "$favorite"] }
             }
         },
+
+        // Select only necessary fields
         {
             $project: {
                 dishName: 1,
@@ -460,14 +478,18 @@ const getAllMenus = async (queryParams: IQueryParams, authId: string) => {
                 favorite: 1
             }
         },
-        { $sort: { [sortBy || "ratting"]: sortOrder === "asc" ? 1 : -1 } },
+
+        // Sorting
+        { $sort: { [sortBy]: sortOrder } },
+
+        // Pagination
         { $skip: (page - 1) * limit },
         { $limit: limit }
     ];
 
     const menus = await Menus.aggregate(aggregationPipeline);
 
-    // Total count (optional, for pagination)
+    // Total count for pagination
     const pagination = {
         total: await Menus.countDocuments(matchStage),
         page,
