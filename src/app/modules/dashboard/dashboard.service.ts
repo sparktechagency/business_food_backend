@@ -431,6 +431,7 @@ const deleteMenu = async (menuId: string) => {
 };
 
 const getAllMenus = async (queryParams: IQueryParams, authId: string) => {
+
     // ✅ Convert page & limit to numbers
     const page = Number(queryParams.page) || 1;
     const limit = Number(queryParams.limit) || 10;
@@ -861,9 +862,13 @@ const sendReviews = async (payload: {
     const menu = await Menus.findById(menuId);
     if (!menu) throw new ApiError(404, "Menu not found");
 
-    const sum = (Number(menu?.ratting) | 0) + ratingValue;
-    const avgRating = Number(sum) / 2;
+    const totalRating = (menu.ratting * menu.ratingCount) + ratingValue;
+    const newCount = menu.ratingCount + 1;
+    const avgRating = totalRating / newCount;
+
     menu.ratting = Number(avgRating.toFixed(1));
+    menu.ratingCount = newCount;
+
     await menu.save();
 
     const order = await Orders.findByIdAndUpdate(orderId, { ratting: true, ratingValue: ratingValue }, { new: true });

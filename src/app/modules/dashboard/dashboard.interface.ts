@@ -51,7 +51,8 @@ export interface IQueryParams {
 
 export interface IMenu {
     time: string;
-    ratting: Number;
+    ratingCount: number;
+    ratting: number;
     weekStart: Date;
     weekEnd: Date;
     mealType: "Breakfast" | "Lunch" | "Dinner" | "Vegano" | "Diabetes" | "Soup" | "Dessert" | "Main_Course" | "Side_Dish" | "Vegan" | "Diabetes";
