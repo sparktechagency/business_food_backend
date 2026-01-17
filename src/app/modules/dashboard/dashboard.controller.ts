@@ -3,7 +3,7 @@ import sendResponse from "../../../shared/sendResponse";
 import { Request, Response } from 'express';
 import { DashboardService, getTotalIncome } from "./dashboard.service";
 import { IReqUser } from "../auth/auth.interface";
-import { Company, Orders } from "./dashboard.model";
+import { Company, Menus, Orders } from "./dashboard.model";
 import Employer from "../employer/employer.model";
 import ApiError from "../../../errors/ApiError";
 
@@ -178,7 +178,13 @@ const updateMenus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMenusSuggested = catchAsync(async (req: Request, res: Response) => {
-    const result = await DashboardService.getMenusSuggested();
+    const result = await Menus.find({
+        dishName: 1,
+        image: 1,
+        price: 1,
+        ratting: 1,
+        calories: 1,
+    }).sort({ ratting: -1 }).limit(10).lean();
     sendResponse(res, {
         statusCode: 200,
         success: true,

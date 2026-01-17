@@ -100,6 +100,7 @@ const menuSchema = new Schema<IMenu>(
     },
     { timestamps: true }
 );
+menuSchema.index({ ratting: -1 });
 
 const ingredientsSchema = new Schema<IIngredients>(
     {
