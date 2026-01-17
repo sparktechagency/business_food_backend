@@ -66,7 +66,6 @@ router.delete("/menu/:id",
 
 // ===App==================
 router.get('/menus-suggested',
-    auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
     DashboardController.getMenusSuggested);
 router.get('/menus-get-date',
     auth(ENUM_USER_ROLE.EMPLOYER, ENUM_USER_ROLE.COMPANY),
