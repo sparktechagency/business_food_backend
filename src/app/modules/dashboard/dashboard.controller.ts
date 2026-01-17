@@ -178,13 +178,7 @@ const updateMenus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMenusSuggested = catchAsync(async (req: Request, res: Response) => {
-    const result = await Menus.find({
-        dishName: 1,
-        image: 1,
-        price: 1,
-        ratting: 1,
-        calories: 1,
-    }).sort({ ratting: -1 }).limit(10).lean();
+    const result = await Menus.find().sort({ ratting: -1 }).limit(10).lean();
     sendResponse(res, {
         statusCode: 200,
         success: true,
