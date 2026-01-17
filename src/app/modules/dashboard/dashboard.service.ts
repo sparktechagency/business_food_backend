@@ -438,7 +438,7 @@ const getAllMenus = async (queryParams: IQueryParams, authId: string) => {
     const sortOrder = queryParams.sortOrder === "asc" ? 1 : -1;
     const searchTerm = queryParams.searchTerm;
 
-    const matchStage: any = { status: "active" };
+    const matchStage: any = {};
 
     // Add other filters
     for (const key in queryParams) {
