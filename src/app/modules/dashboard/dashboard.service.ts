@@ -862,10 +862,16 @@ const sendReviews = async (payload: {
     const menu = await Menus.findById(menuId);
     if (!menu) throw new ApiError(404, "Menu not found");
 
-    const totalRating = (menu.ratting * (menu.ratingCount | 1)) + ratingValue;
-    const newCount = (menu.ratingCount | 1) + 1;
+    // 3️⃣ Safe defaults
+    const currentRating = menu.ratting ?? 0;
+    const currentCount = menu.ratingCount ?? 0;
+
+    // 4️⃣ Calculate exact average
+    const totalRating = currentRating * currentCount + ratingValue;
+    const newCount = currentCount + 1;
     const avgRating = totalRating / newCount;
 
+    // 5️⃣ Save menu rating
     menu.ratting = Number(avgRating.toFixed(1));
     menu.ratingCount = newCount;
 
