@@ -875,6 +875,11 @@ const sendReviews = async (payload: {
     menu.ratting = Number(avgRating.toFixed(1));
     menu.ratingCount = newCount;
 
+    console.log("Updated Menu Rating:", {
+        ratting: menu.ratting,
+        ratingCount: menu.ratingCount
+    });
+
     await menu.save();
 
     const order = await Orders.findByIdAndUpdate(orderId, { ratting: true, ratingValue: ratingValue }, { new: true });
