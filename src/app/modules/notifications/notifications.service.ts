@@ -42,7 +42,6 @@ const updateAll = async () => {
   const result = await Notification.updateMany(
     { status: false },
     { $set: { status: true } },
-    { new: true },
   ).sort({ createdAt: -1 });
   return result;
 };
