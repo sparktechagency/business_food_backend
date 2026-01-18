@@ -13,11 +13,20 @@ process.on('uncaughtException', error => {
 let server: any;
 async function main() {
   try {
-    await mongoose.connect(config.database_url as string);
+    // Add connection options for better performance
+    await mongoose.connect(config.database_url as string, {
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      family: 4,
+    });
     logger.info('DB Connected on Successfully');
 
     const port =
       typeof config.port === 'number' ? config.port : Number(config.port);
+
+    // Fix: server.close() check was inverted (!server should be server)
     server = app.listen(port, config.base_url as string, () => {
       logger.info(`Example app listening on http://${config.base_url}:${config.port}`);
     });
@@ -41,7 +50,7 @@ main().catch(err => errorLogger.error(err));
 
 process.on('SIGTERM', () => {
   logger.info('SIGTERM is received');
-  if (!server) {
+  if (server) {  // Fixed: was !server (inverted logic)
     server.close();
   }
 });
